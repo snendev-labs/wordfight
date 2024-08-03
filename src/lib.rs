@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use bevy::{ecs::entity::MapEntities, prelude::*, utils::EntityHashMap};
+use bevy::{ecs::entity::MapEntities, prelude::*};
 // use bevy_anyhow_alert::*;
 use bevy_replicon::prelude::*;
 
+mod action;
+pub use action::*;
 mod arena;
 pub use arena::*;
 mod letters;
@@ -21,92 +23,106 @@ impl Plugin for WordFightPlugin {
 
         app.add_systems(
             Update,
-            (Self::receive_input_events,)
+            (Self::handle_input_actions, Self::handle_word_contact)
                 .chain()
                 .in_set(WordFightSystems),
         );
 
-        app.replicate::<Player>()
+        app.replicate::<Client>()
             .replicate::<PlayerSide>()
-            .replicate::<Arena>()
+            .replicate::<Word>()
             .replicate::<Score>()
-            .replicate_mapped::<InArena>();
+            .replicate::<Game>()
+            .replicate::<Arena>()
+            .replicate_mapped::<GamePlayers>();
     }
 }
 
 impl WordFightPlugin {
-    fn receive_input_events(
+    fn handle_input_actions(
         mut action_events: EventReader<FromClient<ActionEvent>>,
-        mut players: Query<(&Player, &mut Score, &PlayerSide, &InArena)>,
-        mut arenas: Query<&mut Arena>,
+        mut players: Query<(&mut Word, &PlayerSide, &Client)>,
     ) {
-        let mut actions_by_arena: EntityHashMap<Entity, [Option<Action>; 2]> = Default::default();
         for FromClient {
             client_id,
             event: action,
         } in action_events.read()
         {
-            let Some((_, _, side, in_arena)) = players
-                .get(action.actor)
-                .ok()
-                .filter(|(player, _, _, _)| ***player == *client_id)
+            let ActionEvent {
+                action,
+                side,
+                actor,
+            } = action;
+            let Ok((mut word, player_side, client)) = players.get_mut(*actor) else {
+                continue;
+            };
+            if **client == *client_id && *player_side == *side {
+                action.apply(&mut word);
+            }
+        }
+    }
+
+    fn handle_word_contact(
+        mut players: Query<(&mut Word, &mut Score)>,
+        arenas: Query<(&Arena, &GamePlayers)>,
+    ) {
+        for (arena, game_players) in &arenas {
+            let Ok([(left_word, _), (right_word, _)]) =
+                players.get_many([game_players.left, game_players.right])
             else {
                 continue;
             };
-            let side_index = side.to_index();
-            if let Some(inputs) = actions_by_arena.get_mut(&**in_arena) {
-                inputs[side_index] = Some(action.action);
-            } else {
-                let mut actions = [None; 2];
-                actions[side_index] = Some(action.action);
-                actions_by_arena.insert(**in_arena, actions);
-            }
-        }
-
-        for (arena_entity, actions) in actions_by_arena {
-            let Ok(mut arena) = arenas.get_mut(arena_entity) else {
+            let Ok(strike) = arena.strike(left_word, right_word) else {
                 continue;
             };
-            let Ok(strike) = arena.execute_actions(actions) else {
-                continue;
-            };
-            if let Strike::Point(winning_side) = strike {
-                if let Some((_, mut score, _, _)) =
-                    players.iter_mut().find(|(_, _, side, in_arena)| {
-                        ***in_arena == arena_entity && ***side == winning_side
-                    })
-                {
+            // contact has occurred!
+            // first determine whether anyone gets a point
+            match strike {
+                Strike::Score(winning_side) => {
+                    let winner = match winning_side {
+                        PlayerSide::Left => game_players.left,
+                        PlayerSide::Right => game_players.right,
+                    };
+                    let Ok((_, mut score)) = players.get_mut(winner) else {
+                        continue;
+                    };
                     **score += 1;
                 }
+                // both parry conditions result in no score change
+                Strike::OverRange | Strike::Parry => {}
             }
-            arena.clear();
+            // then clear both player words
+            for (mut word, _) in players
+                .get_many_mut([game_players.left, game_players.right])
+                .into_iter()
+                .flatten()
+            {
+                word.clear();
+            }
         }
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, SystemSet)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(SystemSet)]
 pub struct WordFightSystems;
 
-#[derive(Clone, Copy, Debug, Reflect, Serialize, Deserialize)]
-pub enum Action {
-    Append(Letter),
-    Delete,
-    // SuperCollapse,
-    // SuperExtend,
-}
-
 impl Action {
-    pub fn made_by(self, entity: Entity) -> ActionEvent {
+    pub fn made_by(self, entity: Entity, side: PlayerSide) -> ActionEvent {
         ActionEvent {
             action: self,
+            side,
             actor: entity,
         }
     }
 }
 
-#[derive(Clone, Copy, Debug, Event, Reflect, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug)]
+#[derive(Event, Reflect)]
+#[derive(Serialize, Deserialize)]
 pub struct ActionEvent {
     action: Action,
+    side: PlayerSide,
     actor: Entity,
 }
 
@@ -140,226 +156,244 @@ mod tests {
     }
 
     fn spawn_game(world: &mut World, size: usize) -> (Entity, Entity, Entity) {
-        let arena = world.spawn(Arena::new(size)).id();
         let player_one = world
             .spawn(PlayerBundle {
-                player: ClientId::SERVER.into(),
-                side: ArenaSide::Left.into(),
+                client: ClientId::SERVER.into(),
+                side: PlayerSide::Left,
+                word: Word::default(),
                 score: Score::default(),
-                in_arena: arena.into(),
             })
             .id();
         let player_two = world
             .spawn(PlayerBundle {
-                player: ClientId::SERVER.into(),
-                side: ArenaSide::Right.into(),
+                client: ClientId::SERVER.into(),
+                side: PlayerSide::Right,
+                word: Word::default(),
                 score: Score::default(),
-                in_arena: arena.into(),
             })
             .id();
-        (arena, player_one, player_two)
+        let game = world
+            .spawn(GameBundle::new(player_one, player_two, size))
+            .id();
+        (game, player_one, player_two)
     }
 
+    fn set_word(world: &mut World, player: Entity, new_word: Vec<Letter>) {
+        let mut word = world.get_mut::<Word>(player).unwrap();
+        **word = new_word;
+    }
+
+    fn assert_word_sizes(world: &World, left: (Entity, usize), right: (Entity, usize)) {
+        let left_word_len = world.get::<Word>(left.0).unwrap().len();
+        assert_eq!(left_word_len, left.1);
+        let right_word_len = world.get::<Word>(right.0).unwrap().len();
+        assert_eq!(right_word_len, right.1);
+    }
+
+    fn assert_scores(world: &World, left: (Entity, usize), right: (Entity, usize)) {
+        let left_score = world.get::<Score>(left.0).unwrap();
+        assert_eq!(**left_score, left.1);
+        let right_score = world.get::<Score>(right.0).unwrap();
+        assert_eq!(**right_score, right.1);
+    }
+
+    // test the Strike::Score behavior in a typical scenario where one letter is larger than the other
     #[test]
-    fn test_normal_contact() {
+    fn test_strike_score_typical() {
         let mut app = app();
         let size = 7;
 
-        let (arena_entity, player_one, player_two) = spawn_game(app.world_mut(), size);
+        let (_, player_one, player_two) = spawn_game(app.world_mut(), size);
         // update to let spawns / etc flush
         app.update();
 
-        let mut arenas = app.world_mut().query::<&mut Arena>();
-        let mut arena = arenas.single_mut(app.world_mut());
-        for letter in &WORD[0..3] {
-            arena.add_letter(*letter, ArenaSide::Left);
-            arena.add_letter(*letter, ArenaSide::Right);
-        }
+        let first_three_letters: Vec<Letter> = WORD[0..3].iter().cloned().collect();
+        set_word(app.world_mut(), player_one, first_three_letters.clone());
+        set_word(app.world_mut(), player_two, first_three_letters);
+
         // nothing should happen here, but update to prevent influencing tests of future mutations
         app.update();
 
-        let arena = app.world().get::<Arena>(arena_entity).unwrap();
-        let (left, right) = arena.word_sizes();
-        assert_eq!(left, 3);
-        assert_eq!(right, 3);
+        assert_word_sizes(app.world(), (player_one, 3), (player_two, 3));
         let score = app.world().get::<Score>(player_one).unwrap();
         assert_eq!(**score, 0);
         let score = app.world().get::<Score>(player_two).unwrap();
         assert_eq!(**score, 0);
 
-        app.world_mut()
-            .send_event::<ActionEvent>(Action::Append(WORD[3]).made_by(player_one));
-        // update twice to process the event through replicon
-        app.update();
-        app.update();
-        let arena = app.world().get::<Arena>(arena_entity).unwrap();
-        let (left, right) = arena.word_sizes();
-        assert_eq!(left, 0);
-        assert_eq!(right, 0);
-        let score = app.world().get::<Score>(player_one).unwrap();
-        assert_eq!(**score, 0);
-        let score = app.world().get::<Score>(player_two).unwrap();
-        assert_eq!(**score, 1);
-    }
-
-    #[test]
-    fn test_full_input() {
-        let mut app = app();
-        let size = 7;
-
-        let (arena_entity, player_one, player_two) = spawn_game(app.world_mut(), size);
-        // update to let spawns / etc flush
-        app.update();
-
-        let mut arenas = app.world_mut().query::<&mut Arena>();
-        let mut arena = arenas.single_mut(app.world_mut());
-        for letter in &WORD[0..6] {
-            arena.add_letter(*letter, ArenaSide::Left);
-        }
-        // nothing should happen here, but update to prevent influencing tests of future mutations
-        app.update();
-
-        let arena = app.world().get::<Arena>(arena_entity).unwrap();
-        let (left, right) = arena.word_sizes();
-        assert_eq!(left, 6);
-        assert_eq!(right, 0);
-        let score = app.world().get::<Score>(player_one).unwrap();
-        assert_eq!(**score, 0);
-        let score = app.world().get::<Score>(player_two).unwrap();
-        assert_eq!(**score, 0);
-
-        app.world_mut()
-            .send_event::<ActionEvent>(Action::Append(WORD[6]).made_by(player_one));
+        app.world_mut().send_event::<ActionEvent>(
+            Action::Append(WORD[3]).made_by(player_one, PlayerSide::Left),
+        );
         // update twice to process the event through replicon
         app.update();
         app.update();
 
-        let arena = app.world().get::<Arena>(arena_entity).unwrap();
-        eprintln!("{arena:?}");
-        let (left, right) = arena.word_sizes();
-        assert_eq!(left, 0);
-        assert_eq!(right, 0);
-        let score = app.world().get::<Score>(player_one).unwrap();
-        assert_eq!(**score, 1);
-        let score = app.world().get::<Score>(player_two).unwrap();
-        assert_eq!(**score, 0);
+        assert_word_sizes(app.world(), (player_one, 0), (player_two, 0));
+        assert_scores(app.world(), (player_one, 0), (player_two, 1));
     }
 
-    // test behavior when two inputs arrive at the same time
+    // test the Strike::Score behavior in a second scenario, striking the enemy "edge" of the input space
     #[test]
-    fn test_colliding_inputs() {
+    fn test_strike_score_edge() {
         let mut app = app();
         let size = 7;
 
-        let (arena_entity, player_one, player_two) = spawn_game(app.world_mut(), size);
+        let (_, player_one, player_two) = spawn_game(app.world_mut(), size);
         // update to let spawns / etc flush
         app.update();
 
-        let mut arenas = app.world_mut().query::<&mut Arena>();
-        let mut arena = arenas.single_mut(app.world_mut());
-        for letter in &WORD[0..3] {
-            arena.add_letter(*letter, ArenaSide::Left);
-            arena.add_letter(*letter, ArenaSide::Right);
-        }
+        let first_six_letters = WORD[0..6].iter().cloned().collect();
+        set_word(app.world_mut(), player_one, first_six_letters);
+
         // nothing should happen here, but update to prevent influencing tests of future mutations
         app.update();
 
-        let arena = app.world().get::<Arena>(arena_entity).unwrap();
-        let (left, right) = arena.word_sizes();
-        assert_eq!(left, 3);
-        assert_eq!(right, 3);
-        let score = app.world().get::<Score>(player_one).unwrap();
-        assert_eq!(**score, 0);
-        let score = app.world().get::<Score>(player_two).unwrap();
-        assert_eq!(**score, 0);
+        assert_word_sizes(app.world(), (player_one, 6), (player_two, 0));
+        assert_scores(app.world(), (player_one, 0), (player_two, 0));
 
-        app.world_mut()
-            .send_event::<ActionEvent>(Action::Append(WORD[3]).made_by(player_one));
-
-            app.world_mut()
-            .send_event::<ActionEvent>(Action::Append(WORD[3]).made_by(player_two));
+        app.world_mut().send_event::<ActionEvent>(
+            Action::Append(WORD[6]).made_by(player_one, PlayerSide::Left),
+        );
         // update twice to process the event through replicon
         app.update();
         app.update();
-        let arena = app.world().get::<Arena>(arena_entity).unwrap();
-        let (left, right) = arena.word_sizes();
-        assert_eq!(left, 0);
-        assert_eq!(right, 0);
-        let score = app.world().get::<Score>(player_one).unwrap();
-        assert_eq!(**score, 0);
-        let score = app.world().get::<Score>(player_two).unwrap();
-        assert_eq!(**score, 0);
+
+        assert_word_sizes(app.world(), (player_one, 0), (player_two, 0));
+        assert_scores(app.world(), (player_one, 1), (player_two, 0));
     }
 
-    // test that one user fully filling the input
+    // test a Strike::Score interaction where each letter is fired via an action one at a time
     #[test]
-    fn test_full_interation() {
+    fn test_strike_full_interaction() {
         let mut app = app();
         let size = 7;
 
-        let (arena_entity, player_one, player_two) = spawn_game(app.world_mut(), size);
+        let (_, player_one, player_two) = spawn_game(app.world_mut(), size);
         // update to let spawns / etc flush
         app.update();
 
         // add the first 3 letters of the word to left and then right each letter
         for (index, letter) in WORD[0..3].iter().enumerate() {
-            // first left
+            assert_word_sizes(app.world(), (player_one, index), (player_two, index));
+            assert_scores(app.world(), (player_one, 0), (player_two, 0));
 
-            let arena = app.world().get::<Arena>(arena_entity).unwrap();
-            let (left, right) = arena.word_sizes();
-            assert_eq!(left, index);
-            assert_eq!(right, index);
-            let score = app.world().get::<Score>(player_one).unwrap();
-            assert_eq!(**score, 0);
-            let score = app.world().get::<Score>(player_two).unwrap();
-            assert_eq!(**score, 0);
-            
-            app.world_mut()
-                .send_event::<ActionEvent>(Action::Append(*letter).made_by(player_one));
+            // first left
+            app.world_mut().send_event::<ActionEvent>(
+                Action::Append(*letter).made_by(player_one, PlayerSide::Left),
+            );
             // update twice to process the event through replicon
             app.update();
             app.update();
 
             // then right
 
-            let arena = app.world().get::<Arena>(arena_entity).unwrap();
-            let (left, right) = arena.word_sizes();
-            assert_eq!(left, index + 1);
-            assert_eq!(right, index);
-            let score = app.world().get::<Score>(player_one).unwrap();
-            assert_eq!(**score, 0);
-            let score = app.world().get::<Score>(player_two).unwrap();
-            assert_eq!(**score, 0);
-            
-            app.world_mut()
-                .send_event::<ActionEvent>(Action::Append(*letter).made_by(player_two));
+            assert_word_sizes(app.world(), (player_one, index + 1), (player_two, index));
+            assert_scores(app.world(), (player_one, 0), (player_two, 0));
+
+            app.world_mut().send_event::<ActionEvent>(
+                Action::Append(*letter).made_by(player_two, PlayerSide::Right),
+            );
             // update twice to process the event through replicon
             app.update();
             app.update();
         }
 
-        let arena = app.world().get::<Arena>(arena_entity).unwrap();
-        let (left, right) = arena.word_sizes();
-        assert_eq!(left, 3);
-        assert_eq!(right, 3);
-        let score = app.world().get::<Score>(player_one).unwrap();
-        assert_eq!(**score, 0);
-        let score = app.world().get::<Score>(player_two).unwrap();
-        assert_eq!(**score, 0);
+        assert_word_sizes(app.world(), (player_one, 3), (player_two, 3));
+        assert_scores(app.world(), (player_one, 0), (player_two, 0));
 
-        app.world_mut()
-            .send_event::<ActionEvent>(Action::Append(WORD[3]).made_by(player_one));
+        app.world_mut().send_event::<ActionEvent>(
+            Action::Append(WORD[3]).made_by(player_one, PlayerSide::Left),
+        );
         // update twice to process the event through replicon
         app.update();
         app.update();
-        let arena = app.world().get::<Arena>(arena_entity).unwrap();
-        let (left, right) = arena.word_sizes();
-        assert_eq!(left, 0);
-        assert_eq!(right, 0);
-        let score = app.world().get::<Score>(player_one).unwrap();
-        assert_eq!(**score, 0);
-        let score = app.world().get::<Score>(player_two).unwrap();
-        assert_eq!(**score, 1);
+
+        assert_word_sizes(app.world(), (player_one, 0), (player_two, 0));
+        assert_scores(app.world(), (player_one, 0), (player_two, 1));
     }
 
+    // test the Strike::Parry behavior
+    #[test]
+    fn test_strike_parry() {
+        let mut app = app();
+        let size = 7;
+
+        let (_, player_one, player_two) = spawn_game(app.world_mut(), size);
+        // update to let spawns / etc flush
+        app.update();
+
+        let first_three_letters: Vec<Letter> = WORD[0..3].iter().cloned().collect();
+        set_word(app.world_mut(), player_one, first_three_letters.clone());
+        set_word(app.world_mut(), player_two, first_three_letters);
+
+        // nothing should happen here, but update to prevent influencing tests of future mutations
+        app.update();
+
+        assert_word_sizes(app.world(), (player_one, 3), (player_two, 3));
+        assert_scores(app.world(), (player_one, 0), (player_two, 0));
+
+        // send the 3rd letter again to create a tie, resulting in a Strike::Parry
+        app.world_mut().send_event::<ActionEvent>(
+            Action::Append(WORD[2]).made_by(player_one, PlayerSide::Left),
+        );
+        // update twice to process the event through replicon
+        app.update();
+        app.update();
+
+        assert_word_sizes(app.world(), (player_one, 0), (player_two, 0));
+        assert_scores(app.world(), (player_one, 0), (player_two, 0));
+
+        // now try the same for the other player
+
+        let first_three_letters: Vec<Letter> = WORD[0..3].iter().cloned().collect();
+        set_word(app.world_mut(), player_one, first_three_letters.clone());
+        set_word(app.world_mut(), player_two, first_three_letters);
+        app.update();
+
+        assert_word_sizes(app.world(), (player_one, 3), (player_two, 3));
+        assert_scores(app.world(), (player_one, 0), (player_two, 0));
+        app.world_mut().send_event::<ActionEvent>(
+            Action::Append(WORD[2]).made_by(player_two, PlayerSide::Right),
+        );
+        // update twice to process the event through replicon
+        app.update();
+        app.update();
+
+        assert_word_sizes(app.world(), (player_one, 0), (player_two, 0));
+        assert_scores(app.world(), (player_one, 0), (player_two, 0));
+    }
+
+    // test the Strike::OverRange behavior
+    #[test]
+    fn test_strike_over_range() {
+        let mut app = app();
+        let size = 7;
+
+        let (_, player_one, player_two) = spawn_game(app.world_mut(), size);
+        // update to let spawns / etc flush
+        app.update();
+
+        let first_three_letters: Vec<Letter> = WORD[0..3].iter().cloned().collect();
+        set_word(app.world_mut(), player_one, first_three_letters.clone());
+        set_word(app.world_mut(), player_two, first_three_letters);
+
+        // nothing should happen here, but update to prevent influencing tests of future mutations
+        app.update();
+
+        assert_word_sizes(app.world(), (player_one, 3), (player_two, 3));
+        assert_scores(app.world(), (player_one, 0), (player_two, 0));
+
+        // two inputs at the same time!
+        app.world_mut().send_event::<ActionEvent>(
+            Action::Append(WORD[3]).made_by(player_one, PlayerSide::Left),
+        );
+        app.world_mut().send_event::<ActionEvent>(
+            Action::Append(WORD[3]).made_by(player_two, PlayerSide::Right),
+        );
+        // update twice to process the event through replicon
+        app.update();
+        app.update();
+
+        assert_word_sizes(app.world(), (player_one, 0), (player_two, 0));
+        assert_scores(app.world(), (player_one, 0), (player_two, 0));
+    }
 }

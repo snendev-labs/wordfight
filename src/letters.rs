@@ -2,9 +2,9 @@ use serde::{Deserialize, Serialize};
 
 use bevy::prelude::{Component, KeyCode, Reflect};
 
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Component, Reflect, Deserialize, Serialize,
-)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Component, Reflect)]
+#[derive(Deserialize, Serialize)]
 pub enum Letter {
     A,
     B,

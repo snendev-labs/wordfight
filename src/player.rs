@@ -1,63 +1,63 @@
 use serde::{Deserialize, Serialize};
 
-use bevy::{ecs::entity::MapEntities, prelude::*};
-// use bevy_anyhow_alert::*;
+use bevy::prelude::*;
 use bevy_replicon::prelude::*;
 
-use crate::ArenaSide;
+use crate::Letter;
 
-#[derive(Debug, Component, Deref, Reflect, Deserialize, Serialize)]
-pub struct Player(ClientId);
+#[derive(Debug)]
+#[derive(Component, Deref, Reflect)]
+#[derive(Deserialize, Serialize)]
+pub struct Client(ClientId);
 
-impl From<ClientId> for Player {
+impl From<ClientId> for Client {
     fn from(id: ClientId) -> Self {
-        Player(id)
+        Client(id)
     }
 }
 
-#[derive(Clone, Copy, Debug, Component, Deref, DerefMut, Reflect, Deserialize, Serialize)]
-pub struct PlayerSide(ArenaSide);
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Component, Reflect)]
+#[derive(Deserialize, Serialize)]
+pub enum PlayerSide {
+    Left,
+    Right,
+}
 
-impl From<ArenaSide> for PlayerSide {
-    fn from(side: ArenaSide) -> Self {
-        PlayerSide(side)
+impl PlayerSide {
+    pub fn is_left(&self) -> bool {
+        matches!(self, PlayerSide::Left)
+    }
+
+    pub fn is_right(&self) -> bool {
+        matches!(self, PlayerSide::Right)
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, Component, Deref, DerefMut, Reflect, Deserialize, Serialize)]
+impl std::ops::Not for PlayerSide {
+    type Output = Self;
+    fn not(self) -> Self::Output {
+        match self {
+            Self::Left => Self::Right,
+            Self::Right => Self::Left,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+#[derive(Component, Deref, DerefMut, Reflect)]
+#[derive(Deserialize, Serialize)]
 pub struct Score(usize);
 
-#[derive(
-    Debug,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Component,
-    Deref,
-    DerefMut,
-    Reflect,
-    Deserialize,
-    Serialize,
-)]
-pub struct InArena(Entity);
-
-impl From<Entity> for InArena {
-    fn from(arena: Entity) -> Self {
-        InArena(arena)
-    }
-}
-
-impl MapEntities for InArena {
-    fn map_entities<M: EntityMapper>(&mut self, mapper: &mut M) {
-        **self = mapper.map_entity(**self);
-    }
-}
+#[derive(Clone, Debug, Default)]
+#[derive(Component, Deref, DerefMut, Reflect)]
+#[derive(Deserialize, Serialize)]
+pub struct Word(Vec<Letter>);
 
 #[derive(Bundle)]
 pub struct PlayerBundle {
-    pub player: Player,
+    pub client: Client,
     pub side: PlayerSide,
     pub score: Score,
-    pub in_arena: InArena,
+    pub word: Word,
 }

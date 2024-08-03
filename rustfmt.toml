@@ -1,2 +1,2 @@
 # it is convenient to keep derives for bevy/serde/etc on separate lines
-merge_derives = true
+merge_derives = false

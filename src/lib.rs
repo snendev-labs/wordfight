@@ -137,15 +137,15 @@ mod tests {
     use super::*;
     use bevy::MinimalPlugins;
 
-    const WORD: [Letter; 8] = [
-        Letter::A,
-        Letter::L,
-        Letter::P,
-        Letter::H,
+    const ALPHABET: [Letter; 8] = [
         Letter::A,
         Letter::B,
+        Letter::C,
+        Letter::D,
         Letter::E,
-        Letter::T,
+        Letter::F,
+        Letter::G,
+        Letter::H,
     ];
 
     fn app() -> App {
@@ -207,7 +207,7 @@ mod tests {
         // update to let spawns / etc flush
         app.update();
 
-        let first_three_letters: Vec<Letter> = WORD[0..3].iter().cloned().collect();
+        let first_three_letters: Vec<Letter> = ALPHABET[0..3].iter().cloned().collect();
         set_word(app.world_mut(), player_one, first_three_letters.clone());
         set_word(app.world_mut(), player_two, first_three_letters);
 
@@ -221,14 +221,14 @@ mod tests {
         assert_eq!(**score, 0);
 
         app.world_mut().send_event::<ActionEvent>(
-            Action::Append(WORD[3]).made_by(player_one, PlayerSide::Left),
+            Action::Append(ALPHABET[3]).made_by(player_one, PlayerSide::Left),
         );
         // update twice to process the event through replicon
         app.update();
         app.update();
 
         assert_word_sizes(app.world(), (player_one, 0), (player_two, 0));
-        assert_scores(app.world(), (player_one, 0), (player_two, 1));
+        assert_scores(app.world(), (player_one, 1), (player_two, 0));
     }
 
     // test the Strike::Score behavior in a second scenario, striking the enemy "edge" of the input space
@@ -241,7 +241,7 @@ mod tests {
         // update to let spawns / etc flush
         app.update();
 
-        let first_six_letters = WORD[0..6].iter().cloned().collect();
+        let first_six_letters = ALPHABET[0..6].iter().cloned().collect();
         set_word(app.world_mut(), player_one, first_six_letters);
 
         // nothing should happen here, but update to prevent influencing tests of future mutations
@@ -251,7 +251,7 @@ mod tests {
         assert_scores(app.world(), (player_one, 0), (player_two, 0));
 
         app.world_mut().send_event::<ActionEvent>(
-            Action::Append(WORD[6]).made_by(player_one, PlayerSide::Left),
+            Action::Append(ALPHABET[6]).made_by(player_one, PlayerSide::Left),
         );
         // update twice to process the event through replicon
         app.update();
@@ -272,27 +272,24 @@ mod tests {
         app.update();
 
         // add the first 3 letters of the word to left and then right each letter
-        for (index, letter) in WORD[0..3].iter().enumerate() {
+        for (index, letter) in ALPHABET[0..3].iter().enumerate() {
+            // first left
             assert_word_sizes(app.world(), (player_one, index), (player_two, index));
             assert_scores(app.world(), (player_one, 0), (player_two, 0));
 
-            // first left
             app.world_mut().send_event::<ActionEvent>(
                 Action::Append(*letter).made_by(player_one, PlayerSide::Left),
             );
-            // update twice to process the event through replicon
             app.update();
             app.update();
 
             // then right
-
             assert_word_sizes(app.world(), (player_one, index + 1), (player_two, index));
             assert_scores(app.world(), (player_one, 0), (player_two, 0));
 
             app.world_mut().send_event::<ActionEvent>(
                 Action::Append(*letter).made_by(player_two, PlayerSide::Right),
             );
-            // update twice to process the event through replicon
             app.update();
             app.update();
         }
@@ -301,7 +298,7 @@ mod tests {
         assert_scores(app.world(), (player_one, 0), (player_two, 0));
 
         app.world_mut().send_event::<ActionEvent>(
-            Action::Append(WORD[3]).made_by(player_one, PlayerSide::Left),
+            Action::Append(ALPHABET[3]).made_by(player_two, PlayerSide::Right),
         );
         // update twice to process the event through replicon
         app.update();
@@ -321,7 +318,7 @@ mod tests {
         // update to let spawns / etc flush
         app.update();
 
-        let first_three_letters: Vec<Letter> = WORD[0..3].iter().cloned().collect();
+        let first_three_letters: Vec<Letter> = ALPHABET[0..3].iter().cloned().collect();
         set_word(app.world_mut(), player_one, first_three_letters.clone());
         set_word(app.world_mut(), player_two, first_three_letters);
 
@@ -333,7 +330,7 @@ mod tests {
 
         // send the 3rd letter again to create a tie, resulting in a Strike::Parry
         app.world_mut().send_event::<ActionEvent>(
-            Action::Append(WORD[2]).made_by(player_one, PlayerSide::Left),
+            Action::Append(ALPHABET[2]).made_by(player_one, PlayerSide::Left),
         );
         // update twice to process the event through replicon
         app.update();
@@ -344,7 +341,7 @@ mod tests {
 
         // now try the same for the other player
 
-        let first_three_letters: Vec<Letter> = WORD[0..3].iter().cloned().collect();
+        let first_three_letters: Vec<Letter> = ALPHABET[0..3].iter().cloned().collect();
         set_word(app.world_mut(), player_one, first_three_letters.clone());
         set_word(app.world_mut(), player_two, first_three_letters);
         app.update();
@@ -352,7 +349,7 @@ mod tests {
         assert_word_sizes(app.world(), (player_one, 3), (player_two, 3));
         assert_scores(app.world(), (player_one, 0), (player_two, 0));
         app.world_mut().send_event::<ActionEvent>(
-            Action::Append(WORD[2]).made_by(player_two, PlayerSide::Right),
+            Action::Append(ALPHABET[2]).made_by(player_two, PlayerSide::Right),
         );
         // update twice to process the event through replicon
         app.update();
@@ -372,7 +369,7 @@ mod tests {
         // update to let spawns / etc flush
         app.update();
 
-        let first_three_letters: Vec<Letter> = WORD[0..3].iter().cloned().collect();
+        let first_three_letters: Vec<Letter> = ALPHABET[0..3].iter().cloned().collect();
         set_word(app.world_mut(), player_one, first_three_letters.clone());
         set_word(app.world_mut(), player_two, first_three_letters);
 
@@ -384,10 +381,10 @@ mod tests {
 
         // two inputs at the same time!
         app.world_mut().send_event::<ActionEvent>(
-            Action::Append(WORD[3]).made_by(player_one, PlayerSide::Left),
+            Action::Append(ALPHABET[3]).made_by(player_one, PlayerSide::Left),
         );
         app.world_mut().send_event::<ActionEvent>(
-            Action::Append(WORD[3]).made_by(player_two, PlayerSide::Right),
+            Action::Append(ALPHABET[3]).made_by(player_two, PlayerSide::Right),
         );
         // update twice to process the event through replicon
         app.update();

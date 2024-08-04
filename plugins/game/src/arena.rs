@@ -55,6 +55,10 @@ impl Arena {
         Self { size }
     }
 
+    pub fn size(&self) -> usize {
+        self.size
+    }
+
     pub fn strike(&self, left_word: &Word, right_word: &Word) -> Result<Strike, ArenaError> {
         let total_letters = left_word.len() + right_word.len();
         if total_letters > self.size {

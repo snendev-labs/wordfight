@@ -26,6 +26,7 @@ impl Plugin for WordFightGamePlugin {
                 .chain()
                 .in_set(WordFightSystems),
         );
+        app.observe(SpawnGame::observer);
 
         app.replicate::<Client>()
             .replicate::<PlayerSide>()
@@ -131,6 +132,43 @@ impl MapEntities for ActionEvent {
     }
 }
 
+#[derive(Debug)]
+#[derive(Event)]
+pub struct SpawnGame {
+    arena_size: usize,
+}
+
+impl SpawnGame {
+    pub fn new(arena_size: usize) -> Self {
+        Self { arena_size }
+    }
+
+    fn observer(trigger: Trigger<Self>, mut commands: Commands) {
+        eprintln!("Hello!");
+        let player_one = commands
+            .spawn(PlayerBundle {
+                client: ClientId::SERVER.into(),
+                side: PlayerSide::Left,
+                word: Word::default(),
+                score: Score::default(),
+            })
+            .id();
+        let player_two = commands
+            .spawn(PlayerBundle {
+                client: ClientId::SERVER.into(),
+                side: PlayerSide::Right,
+                word: Word::default(),
+                score: Score::default(),
+            })
+            .id();
+        commands.spawn(GameBundle::new(
+            player_one,
+            player_two,
+            trigger.event().arena_size,
+        ));
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -151,30 +189,27 @@ mod tests {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins);
         app.add_plugins(WordFightGamePlugin);
+        app.update();
         app
     }
 
-    fn spawn_game(world: &mut World, size: usize) -> (Entity, Entity, Entity) {
-        let player_one = world
-            .spawn(PlayerBundle {
-                client: ClientId::SERVER.into(),
-                side: PlayerSide::Left,
-                word: Word::default(),
-                score: Score::default(),
+    fn find_players(world: &mut World) -> (Entity, Entity) {
+        let mut players_query = world.query::<(Entity, &PlayerSide)>();
+        let player_one = players_query
+            .iter(world)
+            .find_map(|(entity, side)| match side {
+                PlayerSide::Left => Some(entity),
+                _ => None,
             })
-            .id();
-        let player_two = world
-            .spawn(PlayerBundle {
-                client: ClientId::SERVER.into(),
-                side: PlayerSide::Right,
-                word: Word::default(),
-                score: Score::default(),
+            .unwrap();
+        let player_two = players_query
+            .iter(world)
+            .find_map(|(entity, side)| match side {
+                PlayerSide::Right => Some(entity),
+                _ => None,
             })
-            .id();
-        let game = world
-            .spawn(GameBundle::new(player_one, player_two, size))
-            .id();
-        (game, player_one, player_two)
+            .unwrap();
+        (player_one, player_two)
     }
 
     fn set_word(world: &mut World, player: Entity, new_word: Vec<Letter>) {
@@ -200,11 +235,13 @@ mod tests {
     #[test]
     fn test_strike_score_typical() {
         let mut app = app();
-        let size = 7;
 
-        let (_, player_one, player_two) = spawn_game(app.world_mut(), size);
+        let size = 7;
+        app.world_mut().trigger(SpawnGame::new(size));
         // update to let spawns / etc flush
         app.update();
+
+        let (player_one, player_two) = find_players(app.world_mut());
 
         let first_three_letters: Vec<Letter> = ALPHABET[0..3].iter().cloned().collect();
         set_word(app.world_mut(), player_one, first_three_letters.clone());
@@ -236,9 +273,11 @@ mod tests {
         let mut app = app();
         let size = 7;
 
-        let (_, player_one, player_two) = spawn_game(app.world_mut(), size);
+        app.world_mut().trigger(SpawnGame::new(size));
         // update to let spawns / etc flush
         app.update();
+
+        let (player_one, player_two) = find_players(app.world_mut());
 
         let first_six_letters = ALPHABET[0..6].iter().cloned().collect();
         set_word(app.world_mut(), player_one, first_six_letters);
@@ -266,9 +305,11 @@ mod tests {
         let mut app = app();
         let size = 7;
 
-        let (_, player_one, player_two) = spawn_game(app.world_mut(), size);
+        app.world_mut().trigger(SpawnGame::new(size));
         // update to let spawns / etc flush
         app.update();
+
+        let (player_one, player_two) = find_players(app.world_mut());
 
         // add the first 3 letters of the word to left and then right each letter
         for (index, letter) in ALPHABET[0..3].iter().enumerate() {
@@ -313,9 +354,11 @@ mod tests {
         let mut app = app();
         let size = 7;
 
-        let (_, player_one, player_two) = spawn_game(app.world_mut(), size);
+        app.world_mut().trigger(SpawnGame::new(size));
         // update to let spawns / etc flush
         app.update();
+
+        let (player_one, player_two) = find_players(app.world_mut());
 
         let first_three_letters: Vec<Letter> = ALPHABET[0..3].iter().cloned().collect();
         set_word(app.world_mut(), player_one, first_three_letters.clone());
@@ -364,9 +407,11 @@ mod tests {
         let mut app = app();
         let size = 7;
 
-        let (_, player_one, player_two) = spawn_game(app.world_mut(), size);
+        app.world_mut().trigger(SpawnGame::new(size));
         // update to let spawns / etc flush
         app.update();
+
+        let (player_one, player_two) = find_players(app.world_mut());
 
         let first_three_letters: Vec<Letter> = ALPHABET[0..3].iter().cloned().collect();
         set_word(app.world_mut(), player_one, first_three_letters.clone());

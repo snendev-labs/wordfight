@@ -5,33 +5,11 @@ use bevy::prelude::{Component, KeyCode, Reflect};
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[derive(Component, Reflect)]
 #[derive(Deserialize, Serialize)]
+
+#[rustfmt::skip]
 pub enum Letter {
-    A,
-    B,
-    C,
-    D,
-    E,
-    F,
-    G,
-    H,
-    I,
-    J,
-    K,
-    L,
-    M,
-    N,
-    O,
-    P,
-    Q,
-    R,
-    S,
-    T,
-    U,
-    V,
-    W,
-    X,
-    Y,
-    Z,
+    A, B, C, D, E, F, G, H, I, J, K, L, M,
+    N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
 }
 use Letter::*;
 

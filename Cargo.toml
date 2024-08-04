@@ -1,11 +1,39 @@
+[workspace]
+members = ["plugins/*"]
+
+[workspace.dependencies]
+game = { path = "plugins/game" }
+server = { path = "plugins/server" }
+ui = { path = "plugins/ui" }
+
+bevy = { version = "0.14", default-features = false }
+bevy_replicon = "0.27"
+sickle_ui = "0.2"
+
+serde = "1.0"
+thiserror = "1.0"
+
 [package]
 name = "wordfight"
 version = "0.1.0"
 edition = "2021"
+author = "Sean Sullivan <me@snen.dev>"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+dev = []
+server = ["dep:server"]
+ui = ["dep:ui"]
+
 
 [dependencies]
-bevy = { version = "0.14", default-features = false }
-bevy_anyhow_alert = "0.3"
-bevy_replicon = "0.27"
-serde = "1.0"
-thiserror = "1.0"
+# plugins
+game = { workspace = true }
+server = { workspace = true, optional = true }
+ui = { workspace = true, optional = true }
+
+# bevy
+bevy = { workspace = true, features = ["multi_threaded", "webgl2"] }

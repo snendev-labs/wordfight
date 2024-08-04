@@ -1,0 +1,11 @@
+[package]
+name = "game"
+version = "0.1.0"
+edition = "2021"
+author = "Sean Sullivan <me@snen.dev>"
+
+[dependencies]
+bevy = { workspace = true }
+bevy_replicon = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }

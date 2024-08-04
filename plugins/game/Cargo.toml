@@ -2,7 +2,7 @@
 name = "game"
 version = "0.1.0"
 edition = "2021"
-author = "Sean Sullivan <me@snen.dev>"
+authors = ["Sean Sullivan <me@snen.dev>"]
 
 [dependencies]
 bevy = { workspace = true }

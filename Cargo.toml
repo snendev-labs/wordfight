@@ -17,7 +17,7 @@ thiserror = "1.0"
 name = "wordfight"
 version = "0.1.0"
 edition = "2021"
-author = "Sean Sullivan <me@snen.dev>"
+authors = ["Sean Sullivan <me@snen.dev>"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]

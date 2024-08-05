@@ -1,5 +1,5 @@
 [workspace]
-members = ["plugins/*"]
+members = ["apps/*", "plugins/*"]
 
 [workspace.dependencies]
 game = { path = "plugins/game" }
@@ -7,11 +7,15 @@ server = { path = "plugins/server" }
 ui = { path = "plugins/ui" }
 
 bevy = { version = "0.14", default-features = false }
+bevy_mod_try_system = "0.2"
+bevy-inspector-egui = "0.25"
 bevy_replicon = "0.27"
 sickle_ui = "0.2"
 
+anyhow = "1.0"
 serde = "1.0"
 thiserror = "1.0"
+
 
 [package]
 name = "wordfight"
@@ -19,15 +23,34 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Sean Sullivan <me@snen.dev>"]
 
-[lib]
-crate-type = ["cdylib", "rlib"]
+# Default release setting for wasm since Trunk uses it
+[profile.release]
+# Compile the entire crate as one unit.
+# Slows compile times, marginal improvements.
+codegen-units = 1
+# Do a second optimization pass over the entire program, including dependencies.
+# Slows compile times, marginal improvements.
+lto = "thin"
+# Optimize with size in mind (also try "z", sometimes it is better).
+# Slightly slows compile times, great improvements to file size and runtime performance.
+opt-level = "s"
+# Strip all debugging information from the binary to slightly reduce file size.
+strip = "debuginfo"
+
+# Override some settings for native builds.
+[profile.release-native]
+# Default to release profile values.
+inherits = "release"
+# Optimize with performance in mind.
+opt-level = 3
+# Keep debug information in the binary.
+strip = "none"
 
 [features]
 default = []
-dev = []
+dev = ["dep:bevy-inspector-egui"]
 server = ["dep:server"]
 ui = ["dep:ui"]
-
 
 [dependencies]
 # plugins
@@ -36,4 +59,5 @@ server = { workspace = true, optional = true }
 ui = { workspace = true, optional = true }
 
 # bevy
-bevy = { workspace = true, features = ["multi_threaded", "webgl2"] }
+bevy = { workspace = true }
+bevy-inspector-egui = { workspace = true, optional = true }

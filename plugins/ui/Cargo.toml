@@ -6,12 +6,16 @@ authors = ["Sean Sullivan <me@snen.dev>"]
 
 [dependencies]
 game = { workspace = true }
-bevy = { workspace = true, features = [
+
+bevy = { workspace = true, default-features = false, features = [
     "bevy_color",
     "bevy_winit",
-    "bevy_render",
     "bevy_text",
     "bevy_ui",
     "default_font",
+    "webgl2",
 ] }
+bevy_mod_try_system = { workspace = true }
 sickle_ui = { workspace = true }
+
+anyhow = { workspace = true }

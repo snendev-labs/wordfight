@@ -1,0 +1,35 @@
+[package]
+name = "wordfight-web"
+version = "0.1.0"
+edition = "2021"
+authors = ["Sean Sullivan <me@snen.dev>"]
+
+[dependencies]
+# plugins
+wordfight = { path = "../../" }
+
+# bevy
+bevy = { workspace = true }
+serde = { workspace = true }
+leptos = { version = "0.6", features = ["csr"] }
+
+console_error_panic_hook = "0.1"
+js-sys = "0.3"
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = [
+    "Blob",
+    "BlobPropertyBag",
+    "console",
+    "DedicatedWorkerGlobalScope",
+    "Document",
+    "HtmlElement",
+    "Location",
+    "MessageEvent",
+    "KeyboardEvent",
+    "Node",
+    "Text",
+    "Url",
+    "Window",
+    "Worker",
+] }
+gloo-worker = "0.5"

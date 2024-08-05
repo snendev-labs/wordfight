@@ -26,6 +26,7 @@ impl Plugin for WordFightGamePlugin {
                 .chain()
                 .in_set(WordFightSystems),
         );
+
         app.observe(SpawnGame::observer);
 
         app.replicate::<Client>()

@@ -8,27 +8,15 @@ pub use worker::*;
 #[derive(Debug)]
 #[derive(Deserialize, Serialize)]
 pub enum AppMessage {
-    AddLetter(AddLetterMessage),
-    Backspace(BackspaceMessage),
+    AddLetter(Letter),
+    Backspace,
 }
 
 impl AppMessage {
     pub fn add_letter(letter: &str) -> Option<Self> {
-        Letter::from_str(letter).map(|letter| Self::AddLetter(AddLetterMessage(letter)))
-    }
-
-    pub fn backspace() -> Self {
-        Self::Backspace(BackspaceMessage)
+        Letter::from_str(letter).map(|letter| Self::AddLetter(letter))
     }
 }
-
-#[derive(Debug)]
-#[derive(Deserialize, Serialize)]
-pub struct AddLetterMessage(Letter);
-
-#[derive(Debug)]
-#[derive(Deserialize, Serialize)]
-pub struct BackspaceMessage;
 
 #[derive(Debug)]
 #[derive(Deserialize, Serialize)]
@@ -39,7 +27,7 @@ pub enum WorkerMessage {
 #[derive(Debug)]
 #[derive(Deserialize, Serialize)]
 pub struct UpdateStateMessage {
-    left_word: String,
-    right_word: String,
-    arena_size: usize,
+    pub left_word: String,
+    pub right_word: String,
+    pub arena_size: usize,
 }

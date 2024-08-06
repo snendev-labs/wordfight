@@ -2,6 +2,7 @@
 members = ["apps/*", "plugins/*"]
 
 [workspace.dependencies]
+active_game = { path = "plugins/active_game" }
 game = { path = "plugins/game" }
 server = { path = "plugins/server" }
 ui = { path = "plugins/ui" }
@@ -33,7 +34,7 @@ codegen-units = 1
 lto = "thin"
 # Optimize with size in mind (also try "z", sometimes it is better).
 # Slightly slows compile times, great improvements to file size and runtime performance.
-opt-level = "s"
+opt-level = "z"
 # Strip all debugging information from the binary to slightly reduce file size.
 strip = "debuginfo"
 
@@ -54,6 +55,7 @@ ui = ["dep:ui"]
 
 [dependencies]
 # plugins
+active_game = { workspace = true }
 game = { workspace = true }
 server = { workspace = true, optional = true }
 ui = { workspace = true, optional = true }

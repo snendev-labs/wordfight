@@ -75,6 +75,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "active_game"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "game",
+]
+
+[[package]]
 name = "adler"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5688,6 +5696,7 @@ dependencies = [
 name = "wordfight"
 version = "0.1.0"
 dependencies = [
+ "active_game",
  "bevy",
  "bevy-inspector-egui",
  "game",

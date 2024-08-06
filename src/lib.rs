@@ -1,8 +1,10 @@
 use bevy::{
-    app::{PluginGroup, PluginGroupBuilder},
+    app::PluginGroupBuilder,
+    prelude::{App, Commands, Plugin, PluginGroup, Startup},
     DefaultPlugins,
 };
 
+pub use active_game::*;
 pub use game::*;
 #[cfg(feature = "server")]
 pub use server::*;
@@ -28,7 +30,10 @@ impl PluginGroup for WordFightPlugins {
             ..Default::default()
         });
         let plugins = plugins.add_group(default_plugins);
-        let plugins = plugins.add(WordFightGamePlugin);
+        let plugins = plugins
+            .add(WordFightGamePlugin)
+            .add(ActiveGamePlugin)
+            .add(StartupPlugin);
         #[cfg(feature = "server")]
         let plugins = plugins.add(WordFightServerPlugin);
         #[cfg(feature = "ui")]
@@ -36,5 +41,19 @@ impl PluginGroup for WordFightPlugins {
         #[cfg(feature = "dev")]
         let plugins = plugins.add(bevy_inspector_egui::quick::WorldInspectorPlugin::default());
         plugins
+    }
+}
+
+pub struct StartupPlugin;
+
+impl Plugin for StartupPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Startup, Self::spawn_game);
+    }
+}
+
+impl StartupPlugin {
+    fn spawn_game(mut commands: Commands) {
+        commands.trigger(SpawnGame::new(7));
     }
 }

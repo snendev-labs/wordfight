@@ -54,6 +54,20 @@ pub struct Score(usize);
 #[derive(Deserialize, Serialize)]
 pub struct Word(Vec<Letter>);
 
+impl std::fmt::Display for Word {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.0
+                .iter()
+                .map(|letter| letter.to_string())
+                .collect::<Vec<_>>()
+                .join("")
+        )
+    }
+}
+
 #[derive(Bundle)]
 pub struct PlayerBundle {
     pub client: Client,

@@ -9,4 +9,3 @@ public_url = "./"
 [serve]
 # Required in order to receive 404s for missing assets, which is what Bevy expects.
 no_spa = true
-# Open a browser tab once the initial build is complete.

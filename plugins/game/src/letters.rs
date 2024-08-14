@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use bevy::prelude::{Component, KeyCode, Reflect};
+use bevy::prelude::{KeyCode, Reflect};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[derive(Component, Reflect)]
+#[derive(Reflect)]
 #[derive(Deserialize, Serialize)]
 
 #[rustfmt::skip]

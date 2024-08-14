@@ -2,8 +2,21 @@
 name = "server"
 version = "0.1.0"
 edition = "2021"
-authors = ["Sean Sullivan <me@snen.dev>"]
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 game = { workspace = true }
+
 bevy = { workspace = true }
+bevy_replicon = { workspace = true, features = ["server"] }
+bevy_replicon_renet2 = { workspace = true, features = ["wt_server_transport"] }
+bevy_renet2 = { workspace = true }
+renet2 = { workspace = true, features = ["wt_server_transport"] }
+
+serde = { workspace = true, features = ["derive"] }
+bincode = "1.3"
+base64 = { version = "0.22" }
+url = "2.5"
+warp = { version = "0.3", default-features = false }
+tokio = { version = "1.32" }
+fastrand = { version = "2.0" }

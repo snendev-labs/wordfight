@@ -11,6 +11,7 @@ log = []
 [dependencies]
 # plugins
 wordfight = { path = "../../" }
+client = { workspace = true }
 
 # bevy
 bevy = { workspace = true }
@@ -19,21 +20,29 @@ leptos = { version = "0.6", features = ["csr"] }
 
 console_error_panic_hook = "0.1"
 js-sys = "0.3"
+futures-lite = "2.3"
 wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = [
     "Blob",
     "BlobPropertyBag",
     "console",
     "DedicatedWorkerGlobalScope",
     "Document",
+    "Headers",
     "HtmlElement",
     "Location",
     "MessageEvent",
     "KeyboardEvent",
     "Node",
+    "RequestInit",
+    "RequestMode",
+    "Response",
     "Text",
     "Url",
     "Window",
     "Worker",
+    "WorkerGlobalScope",
 ] }
-gloo-worker = "0.5"
+
+gloo-worker = { version = "0.5", features = ["futures"] }

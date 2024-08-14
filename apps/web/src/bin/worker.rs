@@ -4,5 +4,6 @@ use wordfight_web::BevyWorker;
 fn main() {
     console_error_panic_hook::set_once();
 
-    BevyWorker::registrar().register();
+    let registrar = BevyWorker::registrar();
+    registrar.register();
 }

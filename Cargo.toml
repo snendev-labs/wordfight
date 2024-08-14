@@ -3,6 +3,7 @@ members = ["apps/*", "plugins/*"]
 
 [workspace.dependencies]
 active_game = { path = "plugins/active_game" }
+client = { path = "plugins/client" }
 game = { path = "plugins/game" }
 server = { path = "plugins/server" }
 ui = { path = "plugins/ui" }
@@ -10,7 +11,13 @@ ui = { path = "plugins/ui" }
 bevy = { version = "0.14", default-features = false }
 bevy_mod_try_system = "0.2"
 bevy-inspector-egui = "0.25"
+bevy_renet2 = { git = "https://github.com/UkoeHB/renet2", rev = "0.0.5" }
 bevy_replicon = "0.27"
+bevy_replicon_renet2 = { git = "https://github.com/UkoeHB/renet2", rev = "0.0.5" }
+renet2 = { git = "https://github.com/UkoeHB/renet2", rev = "0.0.5", default-features = false, features = [
+    "bevy",
+    "serde",
+] }
 sickle_ui = "0.2"
 
 anyhow = "1.0"
@@ -50,14 +57,12 @@ strip = "none"
 [features]
 default = []
 dev = ["dep:bevy-inspector-egui"]
-server = ["dep:server"]
 ui = ["dep:ui"]
 
 [dependencies]
 # plugins
 active_game = { workspace = true }
 game = { workspace = true }
-server = { workspace = true, optional = true }
 ui = { workspace = true, optional = true }
 
 # bevy

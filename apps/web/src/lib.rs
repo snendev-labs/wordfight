@@ -5,6 +5,15 @@ pub use wordfight::*;
 mod worker;
 pub use worker::*;
 
+pub const SERVER_IP: Option<&'static str> = option_env!("SERVER_IP");
+pub const SERVER_DEFAULT_IP: &'static str = "127.0.0.1";
+
+pub const SERVER_PORT: Option<&'static str> = option_env!("SERVER_PORT");
+pub const SERVER_DEFAULT_PORT: &'static str = "7636";
+
+pub const SERVER_TOKENS_PORT: Option<&'static str> = option_env!("SERVER_TOKENS_PORT");
+pub const SERVER_DEFAULT_TOKENS_PORT: &'static str = "7637";
+
 #[derive(Debug)]
 #[derive(Deserialize, Serialize)]
 pub enum AppMessage {

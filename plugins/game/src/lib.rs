@@ -14,11 +14,16 @@ pub use player::*;
 mod wordlist;
 pub use wordlist::*;
 
+pub const PROTOCOL_ID: u64 = 1;
+
 pub struct WordFightGamePlugin;
 
 impl Plugin for WordFightGamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(RepliconPlugins);
+        app.add_plugins(RepliconPlugins.build().set(ServerPlugin {
+            visibility_policy: VisibilityPolicy::Whitelist,
+            ..Default::default()
+        }));
 
         // TODO: perhaps we only want to include this on server.
         // check whether it is currently "optimistic", if so, maybe we keep it
@@ -38,6 +43,7 @@ impl Plugin for WordFightGamePlugin {
             .replicate::<PlayerSide>()
             .replicate::<Word>()
             .replicate::<Score>()
+            .replicate_mapped::<InGame>()
             .replicate::<Game>()
             .replicate::<Arena>()
             .replicate_mapped::<GamePlayers>();
@@ -140,40 +146,60 @@ impl MapEntities for ActionEvent {
     }
 }
 
+#[derive(Clone, Debug)]
+#[derive(Component, Deref, DerefMut, Reflect)]
+#[derive(Deserialize, Serialize)]
+pub struct InGame(Entity);
+
+impl MapEntities for InGame {
+    fn map_entities<M: EntityMapper>(&mut self, mapper: &mut M) {
+        self.0 = mapper.map_entity(self.0);
+    }
+}
+
 #[derive(Debug)]
 #[derive(Event)]
 pub struct SpawnGame {
     arena_size: usize,
+    client1: Entity,
+    client2: Entity,
 }
 
 impl SpawnGame {
-    pub fn new(arena_size: usize) -> Self {
-        Self { arena_size }
+    pub fn new(arena_size: usize, client1: Entity, client2: Entity) -> Self {
+        Self {
+            arena_size,
+            client1,
+            client2,
+        }
     }
 
     fn observer(trigger: Trigger<Self>, mut commands: Commands) {
-        eprintln!("Hello!");
         let player_one = commands
-            .spawn(PlayerBundle {
-                client: ClientId::SERVER.into(),
+            .entity(trigger.event().client1)
+            .insert(PlayerBundle {
                 side: PlayerSide::Left,
                 word: Word::default(),
                 score: Score::default(),
             })
             .id();
         let player_two = commands
-            .spawn(PlayerBundle {
-                client: ClientId::SERVER.into(),
+            .entity(trigger.event().client2)
+            .insert(PlayerBundle {
                 side: PlayerSide::Right,
                 word: Word::default(),
                 score: Score::default(),
             })
             .id();
-        commands.spawn(GameBundle::new(
-            player_one,
-            player_two,
-            trigger.event().arena_size,
-        ));
+        let game = commands
+            .spawn(GameBundle::new(
+                player_one,
+                player_two,
+                trigger.event().arena_size,
+            ))
+            .id();
+        commands.entity(player_one).insert(InGame(game));
+        commands.entity(player_two).insert(InGame(game));
     }
 }
 
@@ -428,7 +454,10 @@ mod tests {
         let mut app = app();
         let size = 7;
 
-        app.world_mut().trigger(SpawnGame::new(size));
+        let client1 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
+        let client2 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
+        app.world_mut()
+            .trigger(SpawnGame::new(size, client1, client2));
         // update to let spawns / etc flush
         app.update();
 

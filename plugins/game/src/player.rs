@@ -70,7 +70,6 @@ impl std::fmt::Display for Word {
 
 #[derive(Bundle)]
 pub struct PlayerBundle {
-    pub client: Client,
     pub side: PlayerSide,
     pub score: Score,
     pub word: Word,

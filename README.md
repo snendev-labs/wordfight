@@ -2,6 +2,22 @@
 
 WORDFIGHT is a simple text-based "fighting" game. The only mechanic is spelling.
 
+## How To Run
+
+To run the webserver (be sure to have [`trunk`](https://trunkrs.dev/) installed!):
+
+```sh
+trunk serve --release
+```
+
+To run the game-server:
+
+```sh
+cargo run -p wordfight-server --release
+```
+
+You can configure the server IP, port, and the port for accessing the server token using the environment variables `SERVER_IP`, `SERVER_PORT`, and `SERVER_TOKENS_PORT` respectively.
+
 ## Gameplay
 
 Two players battle by typing any substring of a valid English word into the shared input space of a fixed size (for the time being, that size is 7 characters). Each player's word extends from one "side" of the input, and both perspectives are shown to both players.

@@ -1,0 +1,21 @@
+[package]
+name = "client"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+
+[dependencies]
+game = { workspace = true }
+
+bevy = { workspace = true }
+bevy_replicon = { workspace = true, features = ["client"] }
+bevy_replicon_renet2 = { workspace = true, features = ["wt_client_transport"] }
+bevy_renet2 = { workspace = true }
+renet2 = { workspace = true, features = ["wt_client_transport"] }
+
+serde = { workspace = true }
+bincode = "1.3"
+base64 = { version = "0.22" }
+url = "2.5"
+wasm-timer = { version = "0.2" }

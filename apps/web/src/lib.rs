@@ -28,6 +28,8 @@ pub enum WorkerMessage {
 #[derive(Deserialize, Serialize)]
 pub struct UpdateStateMessage {
     pub left_word: String,
+    pub left_score: usize,
     pub right_word: String,
+    pub right_score: usize,
     pub arena_size: usize,
 }

@@ -69,7 +69,9 @@ impl Worker for BevyWorker {
                     *id,
                     WorkerMessage::UpdateState(UpdateStateMessage {
                         left_word: update.left_word.to_string(),
-                        right_word: update.left_word.to_string(),
+                        left_score: *update.left_score,
+                        right_word: update.right_word.to_string(),
+                        right_score: *update.right_score,
                         arena_size: update.arena_size,
                     }),
                 );

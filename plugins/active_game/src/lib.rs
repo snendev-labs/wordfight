@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use game::{Arena, Game, GamePlayers, Word};
+use game::{Arena, Game, GamePlayers, Score, Word};
 
 pub struct ActiveGamePlugin;
 
@@ -30,7 +30,7 @@ impl ActiveGamePlugin {
         mut events: EventWriter<ActiveGameUpdate>,
         active_game: Res<ActiveGame>,
         games: Query<(&GamePlayers, &Arena)>,
-        words: Query<&Word>,
+        words: Query<(&Word, &Score)>,
         updated_words: Query<(), Changed<Word>>,
     ) {
         let Some((game, players, arena)) = games
@@ -46,21 +46,23 @@ impl ActiveGamePlugin {
             return;
         };
 
-        let left_word = words
+        let (left_word, left_score) = words
             .get(players.left)
-            .cloned()
+            .map(|(word, score)| (word.clone(), *score))
             .expect("PlayerSide::Left to have a Word");
-        let right_word = words
+        let (right_word, right_score) = words
             .get(players.right)
-            .cloned()
+            .map(|(word, score)| (word.clone(), *score))
             .expect("PlayerSide::Right should have a Word");
         let event = ActiveGameUpdate {
             game: game.0,
             arena_size: arena.size(),
             player_left: players.left,
             left_word,
+            left_score,
             player_right: players.right,
             right_word,
+            right_score,
         };
         commands.trigger(event.clone());
         events.send(event);
@@ -79,6 +81,8 @@ pub struct ActiveGameUpdate {
     pub arena_size: usize,
     pub player_left: Entity,
     pub left_word: Word,
+    pub left_score: Score,
     pub player_right: Entity,
     pub right_word: Word,
+    pub right_score: Score,
 }

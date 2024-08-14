@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Sean Sullivan <me@snen.dev>"]
 
+[features]
+default = []
+log = []
+
 [dependencies]
 # plugins
 wordfight = { path = "../../" }

@@ -4,6 +4,7 @@
 }
 
 * {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
     border: 0;
@@ -25,33 +26,38 @@ main {
     flex-direction: column;
 }
 
-#loading-screen {
-    background-color: var(--loading-screen-bg-color);
+.scoreboard {
+    width: 200px;
+    margin: 0 auto 40px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    border: 1px solid #414141;
+    background: #eaeaeb;
 }
 
-.spinner {
-    width: 128px;
-    height: 128px;
-    border: 64px solid transparent;
-    border-bottom-color: #ececec;
-    border-right-color: #b2b2b2;
-    border-top-color: #787878;
-    border-radius: 50%;
-    box-sizing: border-box;
-    animation: spin 1.2s linear infinite;
+.arena {
+    display: flex;
+    gap: 40px;
+    flex-direction: row;
+    justify-content: space-evenly;
+    background: #f2f2f2;
+    font-size: 64px;
 }
 
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
+.arena-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    gap: 20px;
 }
 
-#bevy {
-    /* Hide Bevy app before it loads */
-    height: 0;
+.letter-slot {
+    width: 90px;
+    height: 90px;
+    border: 2px solid #313131;
+    border-top: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

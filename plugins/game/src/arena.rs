@@ -61,14 +61,18 @@ impl Arena {
 
     pub fn strike(&self, left_word: &Word, right_word: &Word) -> Result<Strike, ArenaError> {
         let total_letters = left_word.len() + right_word.len();
-        if total_letters > self.size {
-            return Ok(Strike::OverRange);
-        } else if total_letters < self.size {
-            return Err(ArenaError::NotInRange {
-                left: left_word.len(),
-                right: right_word.len(),
-                total: self.size,
-            });
+        match total_letters.cmp(&self.size) {
+            Ordering::Greater => {
+                return Ok(Strike::OverRange);
+            }
+            Ordering::Less => {
+                return Err(ArenaError::NotInRange {
+                    left: left_word.len(),
+                    right: right_word.len(),
+                    total: self.size,
+                });
+            }
+            _ => {}
         };
 
         match left_word.last().cmp(&right_word.last()) {

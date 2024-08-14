@@ -84,7 +84,7 @@ impl Letter {
         }
     }
 
-    pub fn from_str(letter: &str) -> Option<Self> {
+    pub fn from_string(letter: &str) -> Option<Self> {
         match letter {
             "A" | "a" => Some(A),
             "B" | "b" => Some(B),

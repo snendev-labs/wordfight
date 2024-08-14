@@ -14,7 +14,7 @@ pub enum AppMessage {
 
 impl AppMessage {
     pub fn add_letter(letter: &str) -> Option<Self> {
-        Letter::from_str(letter).map(|letter| Self::AddLetter(letter))
+        Letter::from_string(letter).map(|letter| Self::AddLetter(letter))
     }
 }
 

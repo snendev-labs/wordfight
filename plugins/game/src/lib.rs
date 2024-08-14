@@ -11,6 +11,8 @@ mod letters;
 pub use letters::*;
 mod player;
 pub use player::*;
+mod wordlist;
+pub use wordlist::*;
 
 pub struct WordFightGamePlugin;
 
@@ -18,6 +20,9 @@ impl Plugin for WordFightGamePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(RepliconPlugins);
 
+        // TODO: perhaps we only want to include this on server.
+        // check whether it is currently "optimistic", if so, maybe we keep it
+        app.init_resource::<WordList>();
         app.add_mapped_client_event::<ActionEvent>(ChannelKind::Ordered);
 
         app.add_systems(
@@ -43,6 +48,7 @@ impl WordFightGamePlugin {
     fn handle_input_actions(
         mut action_events: EventReader<FromClient<ActionEvent>>,
         mut players: Query<(&mut Word, &PlayerSide, &Client)>,
+        dictionary: Dictionary,
     ) {
         for FromClient {
             client_id,
@@ -57,8 +63,9 @@ impl WordFightGamePlugin {
             let Ok((mut word, player_side, client)) = players.get_mut(*actor) else {
                 continue;
             };
+
             if **client == *client_id && *player_side == *side {
-                action.apply(&mut word);
+                action.apply(&mut word, &dictionary);
             }
         }
     }

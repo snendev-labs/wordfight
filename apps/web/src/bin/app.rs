@@ -30,7 +30,7 @@ fn App() -> impl IntoView {
     let (left_score, set_left_score) = create_signal(0);
     let (right_word, set_right_word) = create_signal("".to_string());
     let (right_score, set_right_score) = create_signal(0);
-    let (arena_size, set_arena_size) = create_signal(0);
+    let (arena_size, set_arena_size) = create_signal(7);
     #[cfg(feature = "log")]
     log("Render (App)".to_string());
 
@@ -53,21 +53,25 @@ fn App() -> impl IntoView {
         .spawn("./worker.js");
     let bridge = Box::leak(Box::new(bridge));
 
+    let handle_input = move |event: KeyboardEvent| {
+        if let Some(message) = match event.key().as_str() {
+            "Backspace" | "Delete" | "ArrowLeft" => Some(AppMessage::Backspace),
+            letter => AppMessage::add_letter(letter),
+        } {
+            bridge.send(message);
+        }
+    };
+
     view! {
-        <Game
-        left_word=left_word
-        left_score=left_score
-        right_word=right_word
-        right_score=right_score
-        arena_size=arena_size
-        handle_input=move |event: KeyboardEvent| {
-            if let Some(message) = match event.key().as_str() {
-                "Backspace" | "Delete" | "ArrowLeft" => Some(AppMessage::Backspace),
-                letter => AppMessage::add_letter(letter),
-            } {
-                bridge.send(message);
-            }
-        } />
+        <div class="center" tabindex="1" on:keyup=handle_input>
+            <Game
+                left_word=left_word
+                left_score=left_score
+                right_word=right_word
+                right_score=right_score
+                arena_size=arena_size
+            />
+        </div>
     }
 }
 
@@ -78,21 +82,18 @@ fn Game(
     right_word: ReadSignal<String>,
     right_score: ReadSignal<usize>,
     arena_size: ReadSignal<usize>,
-    handle_input: impl Fn(KeyboardEvent) + 'static,
 ) -> impl IntoView {
     #[cfg(feature = "log")]
     log("Render (Game)".to_string());
     view! {
-        <div class="center" tabindex="1" on:keyup=handle_input>
-            <div>
-                "Arena: "
-                {arena_size}
-            </div>
-            <Scoreboard left_score=left_score right_score=right_score />
-            <div class="arena">
-                <Word top_word=left_word bottom_word=right_word arena_size=arena_size />
-                <Word top_word=right_word bottom_word=left_word arena_size=arena_size />
-            </div>
+        <div>
+            "Arena: "
+            {arena_size}
+        </div>
+        <Scoreboard left_score=left_score right_score=right_score />
+        <div class="arena">
+            <Word top_word=left_word bottom_word=right_word arena_size=arena_size />
+            <Word top_word=right_word bottom_word=left_word arena_size=arena_size />
         </div>
     }
 }

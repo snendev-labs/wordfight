@@ -59,6 +59,7 @@ impl Worker for BevyWorker {
     }
 
     fn update(&mut self, scope: &WorkerScope<Self>, _: Self::Message) {
+        #[cfg(feature = "log")]
         log("Update".to_string());
         self.app.update();
         let events = self.app.world().resource::<Events<ActiveGameUpdate>>();
@@ -80,6 +81,7 @@ impl Worker for BevyWorker {
     }
 
     fn received(&mut self, _: &WorkerScope<Self>, message: Self::Input, id: HandlerId) {
+        #[cfg(feature = "log")]
         log(format!("Message received! {:?}", message));
         self.subscriptions.insert(id);
         let action: wordfight::Action = match message {

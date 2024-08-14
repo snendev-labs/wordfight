@@ -184,13 +184,13 @@ mod tests {
 
     const ALPHABET: [Letter; 8] = [
         Letter::A,
-        Letter::B,
-        Letter::C,
-        Letter::D,
-        Letter::E,
-        Letter::F,
-        Letter::G,
+        Letter::L,
+        Letter::P,
         Letter::H,
+        Letter::A,
+        Letter::B,
+        Letter::E,
+        Letter::T,
     ];
 
     fn app() -> App {
@@ -245,7 +245,10 @@ mod tests {
         let mut app = app();
 
         let size = 7;
-        app.world_mut().trigger(SpawnGame::new(size));
+        let client1 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
+        let client2 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
+        app.world_mut()
+            .trigger(SpawnGame::new(size, client1, client2));
         // update to let spawns / etc flush
         app.update();
 
@@ -272,7 +275,7 @@ mod tests {
         app.update();
 
         assert_word_sizes(app.world(), (player_one, 0), (player_two, 0));
-        assert_scores(app.world(), (player_one, 1), (player_two, 0));
+        assert_scores(app.world(), (player_one, 0), (player_two, 1));
     }
 
     // test the Strike::Score behavior in a second scenario, striking the enemy "edge" of the input space
@@ -281,7 +284,10 @@ mod tests {
         let mut app = app();
         let size = 7;
 
-        app.world_mut().trigger(SpawnGame::new(size));
+        let client1 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
+        let client2 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
+        app.world_mut()
+            .trigger(SpawnGame::new(size, client1, client2));
         // update to let spawns / etc flush
         app.update();
 
@@ -313,7 +319,10 @@ mod tests {
         let mut app = app();
         let size = 7;
 
-        app.world_mut().trigger(SpawnGame::new(size));
+        let client1 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
+        let client2 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
+        app.world_mut()
+            .trigger(SpawnGame::new(size, client1, client2));
         // update to let spawns / etc flush
         app.update();
 
@@ -353,22 +362,26 @@ mod tests {
         app.update();
 
         assert_word_sizes(app.world(), (player_one, 0), (player_two, 0));
-        assert_scores(app.world(), (player_one, 0), (player_two, 1));
+        assert_scores(app.world(), (player_one, 1), (player_two, 0));
     }
 
     // test the Strike::Parry behavior
     #[test]
     fn test_strike_parry() {
+        const SASS: [Letter; 4] = [Letter::S, Letter::A, Letter::S, Letter::S];
         let mut app = app();
         let size = 7;
 
-        app.world_mut().trigger(SpawnGame::new(size));
+        let client1 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
+        let client2 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
+        app.world_mut()
+            .trigger(SpawnGame::new(size, client1, client2));
         // update to let spawns / etc flush
         app.update();
 
         let (player_one, player_two) = find_players(app.world_mut());
 
-        let first_three_letters: Vec<Letter> = ALPHABET[0..3].iter().cloned().collect();
+        let first_three_letters: Vec<Letter> = SASS[0..3].iter().cloned().collect();
         set_word(app.world_mut(), player_one, first_three_letters.clone());
         set_word(app.world_mut(), player_two, first_three_letters);
 
@@ -380,7 +393,7 @@ mod tests {
 
         // send the 3rd letter again to create a tie, resulting in a Strike::Parry
         app.world_mut().send_event::<ActionEvent>(
-            Action::Append(ALPHABET[2]).made_by(player_one, PlayerSide::Left),
+            Action::Append(SASS[3]).made_by(player_one, PlayerSide::Left),
         );
         // update twice to process the event through replicon
         app.update();
@@ -391,7 +404,7 @@ mod tests {
 
         // now try the same for the other player
 
-        let first_three_letters: Vec<Letter> = ALPHABET[0..3].iter().cloned().collect();
+        let first_three_letters: Vec<Letter> = SASS[0..3].iter().cloned().collect();
         set_word(app.world_mut(), player_one, first_three_letters.clone());
         set_word(app.world_mut(), player_two, first_three_letters);
         app.update();
@@ -399,7 +412,7 @@ mod tests {
         assert_word_sizes(app.world(), (player_one, 3), (player_two, 3));
         assert_scores(app.world(), (player_one, 0), (player_two, 0));
         app.world_mut().send_event::<ActionEvent>(
-            Action::Append(ALPHABET[2]).made_by(player_two, PlayerSide::Right),
+            Action::Append(SASS[3]).made_by(player_two, PlayerSide::Right),
         );
         // update twice to process the event through replicon
         app.update();

@@ -47,7 +47,7 @@ jobs:
         run: "mkdir assets"
 
       - name: Build wasm
-        run: "trunk build --release"
+        run: "SERVER_IP=$SERVER_IP SERVER_PORT=$SERVER_PORT SERVER_TOKENS_PORT=$SERVER_TOKENS_PORT trunk build --release"
 
       - name: Upload to Deno Deploy
         uses: denoland/deployctl@v1

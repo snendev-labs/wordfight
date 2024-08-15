@@ -6,8 +6,11 @@ use web_sys::{Request, RequestInit, RequestMode, Response};
 
 use bevy::{prelude::*, utils::HashSet};
 
-use client::ClientPlugin;
-use wordfight::{ActiveGameUpdate, PlayerSide, WordFightPlugins};
+use client::{
+    bevy_replicon::prelude::{RepliconClient, RepliconClientStatus},
+    ClientPlugin,
+};
+use wordfight::{ActiveGameUpdate, Client, PlayerSide, WordFightPlugins};
 
 use crate::{
     AppMessage, UpdateStateMessage, WorkerMessage, SERVER_DEFAULT_IP, SERVER_DEFAULT_PORT,
@@ -54,12 +57,20 @@ impl Worker for BevyWorker {
         }
     }
 
+    fn connected(&mut self, _scope: &WorkerScope<Self>, id: HandlerId) {
+        self.subscriptions.insert(id);
+    }
+
     fn update(&mut self, scope: &WorkerScope<Self>, message: Self::Message) {
         if let Some(app) = self.game.as_mut() {
             let WorkerUpdateMessage::Update = message else {
                 return;
             };
             app.update();
+
+            let Some((_, my_side)) = get_my_player(app.world_mut()) else {
+                return;
+            };
             let events = app.world().resource::<Events<ActiveGameUpdate>>();
             let mut reader = events.get_reader();
             if let Some(update) = reader.read(&events).last() {
@@ -67,6 +78,7 @@ impl Worker for BevyWorker {
                     scope.respond(
                         *id,
                         WorkerMessage::UpdateState(UpdateStateMessage {
+                            my_side,
                             left_word: update.left_word.to_string(),
                             left_score: *update.left_score,
                             right_word: update.right_word.to_string(),
@@ -83,32 +95,43 @@ impl Worker for BevyWorker {
     }
 
     fn received(&mut self, _: &WorkerScope<Self>, message: Self::Input, id: HandlerId) {
-        if let Some(app) = self.game.as_mut() {
-            #[cfg(feature = "log")]
-            log(format!("Message received! {:?}", message));
-            self.subscriptions.insert(id);
-            let action: wordfight::Action = match message {
-                AppMessage::AddLetter(letter) => wordfight::Action::Append(letter),
-                AppMessage::Backspace => wordfight::Action::Delete,
-            };
-            let mut query = app.world_mut().query::<(Entity, &PlayerSide)>();
-            let Some((my_player, _)) = query
-                .iter(app.world())
-                .find(|(_, side)| **side == PlayerSide::Left)
-            else {
-                return;
-            };
-            app.world_mut()
-                .send_event(action.made_by(my_player, wordfight::PlayerSide::Left));
-
-            app.update();
-        } else {
+        let Some(app) = self.game.as_mut() else {
             #[cfg(feature = "log")]
             log(format!(
                 "Discarding message received before app is ready: {:?}",
                 message
             ));
-        }
+            return;
+        };
+        let replicon_client = app.world().resource::<RepliconClient>();
+        let RepliconClientStatus::Connected {
+            client_id: Some(my_client_id),
+        } = replicon_client.status()
+        else {
+            #[cfg(feature = "log")]
+            log(format!(
+                "Discarding message received before client is connected: {:?}",
+                message
+            ));
+            return;
+        };
+        #[cfg(feature = "log")]
+        log(format!("Message received! {:?}", message));
+        let action: wordfight::Action = match message {
+            AppMessage::AddLetter(letter) => wordfight::Action::Append(letter),
+            AppMessage::Backspace => wordfight::Action::Delete,
+        };
+        let mut query = app.world_mut().query::<(Entity, &PlayerSide, &Client)>();
+        let Some((my_player, my_side, _)) = query
+            .iter(app.world())
+            .find(|(_, _, client)| ***client == my_client_id)
+        else {
+            return;
+        };
+        let my_side = *my_side;
+        app.world_mut()
+            .send_event(action.made_by(my_player, my_side));
+        app.update();
     }
 }
 
@@ -139,6 +162,24 @@ fn build_app(server_token: String) -> App {
     app.update();
     app.update();
     app
+}
+
+fn get_my_player(world: &mut World) -> Option<(Entity, PlayerSide)> {
+    let replicon_client = world.resource::<RepliconClient>();
+    let RepliconClientStatus::Connected {
+        client_id: Some(my_client_id),
+    } = replicon_client.status()
+    else {
+        return None;
+    };
+    let mut query = world.query::<(Entity, &PlayerSide, &Client)>();
+    let Some((my_player, my_side, _)) = query
+        .iter(world)
+        .find(|(_, _, client)| ***client == my_client_id)
+    else {
+        return None;
+    };
+    Some((my_player, *my_side))
 }
 
 #[wasm_bindgen]

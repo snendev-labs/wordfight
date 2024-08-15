@@ -106,6 +106,7 @@ impl ServerPlugin {
         mut connected_clients: ResMut<ConnectedClients>,
     ) {
         // let players have visibility over all entities present in the same game
+        // and the games too
         for (entity, player, player_game) in players
             .iter()
             .filter_map(|(entity, player, in_game)| in_game.map(|game| (entity, player, game)))

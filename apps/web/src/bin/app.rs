@@ -4,6 +4,7 @@ use leptos::*;
 #[cfg(feature = "log")]
 use wasm_bindgen::prelude::*;
 
+use wordfight::PlayerSide;
 use wordfight_web::{AppMessage, BevyWorker};
 
 #[cfg(feature = "log")]
@@ -26,6 +27,8 @@ fn main() {
 
 #[component]
 fn App() -> impl IntoView {
+    let (game_started, set_game_started) = create_signal(false);
+    let (my_side, set_my_side) = create_signal(PlayerSide::Left);
     let (left_word, set_left_word) = create_signal("".to_string());
     let (left_score, set_left_score) = create_signal(0);
     let (right_word, set_right_word) = create_signal("".to_string());
@@ -42,6 +45,10 @@ fn App() -> impl IntoView {
                 wordfight_web::WorkerMessage::UpdateState(state) => {
                     #[cfg(feature = "log")]
                     log(format!("Setting state..."));
+                    if !game_started.get() {
+                        set_game_started.set(true);
+                    }
+                    set_my_side.set(state.my_side);
                     set_left_word.set(state.left_word);
                     set_left_score.set(state.left_score);
                     set_right_word.set(state.right_word);
@@ -62,25 +69,59 @@ fn App() -> impl IntoView {
         }
     };
 
+    let my_word = move || {
+        if my_side.get() == PlayerSide::Left {
+            left_word.get()
+        } else {
+            right_word.get()
+        }
+    };
+    let my_score = move || {
+        if my_side.get() == PlayerSide::Left {
+            left_score.get()
+        } else {
+            right_score.get()
+        }
+    };
+    let enemy_word = move || {
+        if my_side.get() == PlayerSide::Left {
+            right_word.get()
+        } else {
+            left_word.get()
+        }
+    };
+    let enemy_score = move || {
+        if my_side.get() == PlayerSide::Left {
+            right_score.get()
+        } else {
+            left_score.get()
+        }
+    };
+
     view! {
         <div class="center" tabindex="1" on:keyup=handle_input>
-            <Game
-                left_word=left_word
-                left_score=left_score
-                right_word=right_word
-                right_score=right_score
-                arena_size=arena_size
-            />
+            <Show
+                when=move || game_started.get()
+                fallback=|| view! { <div>"Finding match..."</div> }
+            >
+                <Game
+                    my_word=my_word
+                    my_score=my_score
+                    enemy_word=enemy_word
+                    enemy_score=enemy_score
+                    arena_size=arena_size
+                />
+            </Show>
         </div>
     }
 }
 
 #[component]
 fn Game(
-    left_word: ReadSignal<String>,
-    left_score: ReadSignal<usize>,
-    right_word: ReadSignal<String>,
-    right_score: ReadSignal<usize>,
+    #[prop(into)] my_word: Signal<String>,
+    #[prop(into)] my_score: Signal<usize>,
+    #[prop(into)] enemy_word: Signal<String>,
+    #[prop(into)] enemy_score: Signal<usize>,
     arena_size: ReadSignal<usize>,
 ) -> impl IntoView {
     #[cfg(feature = "log")]
@@ -90,32 +131,39 @@ fn Game(
             "Arena: "
             {arena_size}
         </div>
-        <Scoreboard left_score=left_score right_score=right_score />
+        <Scoreboard my_score=my_score enemy_score=enemy_score />
         <div class="arena">
-            <Word top_word=left_word bottom_word=right_word arena_size=arena_size />
-            <Word top_word=right_word bottom_word=left_word arena_size=arena_size />
+            <div class="friendly">
+                <Word top_word=my_word bottom_word=enemy_word arena_size=arena_size />
+            </div>
+            <div class="enemy">
+                <Word top_word=enemy_word bottom_word=my_word arena_size=arena_size />
+            </div>
         </div>
     }
 }
 
 #[component]
-fn Scoreboard(left_score: ReadSignal<usize>, right_score: ReadSignal<usize>) -> impl IntoView {
+fn Scoreboard(
+    #[prop(into)] my_score: Signal<usize>,
+    #[prop(into)] enemy_score: Signal<usize>,
+) -> impl IntoView {
     #[cfg(feature = "log")]
     log("Render (Scoreboard)".to_string());
     view! {
         <div class="scoreboard">
-            <div>{left_score}</div>
+            <div class=".friendly">{my_score}</div>
             <hr/>
-            <div>{right_score}</div>
+            <div class=".enemy">{enemy_score}</div>
         </div>
     }
 }
 
 #[component]
 fn Word(
-    top_word: ReadSignal<String>,
-    bottom_word: ReadSignal<String>,
-    arena_size: ReadSignal<usize>,
+    #[prop(into)] top_word: Signal<String>,
+    #[prop(into)] bottom_word: Signal<String>,
+    #[prop(into)] arena_size: Signal<usize>,
 ) -> impl IntoView {
     #[cfg(feature = "log")]
     log("Render (Word)".to_string());

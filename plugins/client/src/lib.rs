@@ -11,6 +11,10 @@ use bevy_replicon_renet2::{
     RenetChannelsExt, RepliconRenetClientPlugin,
 };
 
+pub use bevy_renet2;
+pub use bevy_replicon;
+pub use bevy_replicon_renet2;
+
 mod transport;
 
 pub struct ClientPlugin {

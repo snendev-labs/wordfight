@@ -32,7 +32,12 @@ impl Plugin for WordFightGamePlugin {
 
         app.add_systems(
             Update,
-            (Self::handle_input_actions, Self::handle_word_contact)
+            (
+                Self::handle_input_actions,
+                Self::handle_word_contact,
+                Self::despawn_empty_games,
+                Self::cleanup_game_entities,
+            )
                 .chain()
                 .in_set(WordFightSystems),
         );
@@ -80,19 +85,19 @@ impl WordFightGamePlugin {
 
     fn handle_word_contact(
         mut players: Query<(&mut Word, &mut Score)>,
-        arenas: Query<(&Arena, &GamePlayers)>,
+        games: Query<(Entity, &Arena, &GamePlayers)>,
     ) {
-        for (arena, game_players) in &arenas {
+        for (game, arena, game_players) in &games {
             let Ok([(left_word, _), (right_word, _)]) =
                 players.get_many([game_players.left, game_players.right])
             else {
-                error!("Failed to find players {game_players:?}");
+                error!("Game {game:?}: Failed to find players {game_players:?}");
                 continue;
             };
             let Ok(strike) = arena.strike(left_word, right_word) else {
                 continue;
             };
-            info!("Strike occurred: {strike:?}");
+            info!("Game {game:?}: Strike occurred: {strike:?}");
             // contact has occurred!
             // first determine whether anyone gets a point
             match strike {
@@ -102,12 +107,12 @@ impl WordFightGamePlugin {
                         PlayerSide::Right => game_players.right,
                     };
                     let Ok((_, mut score)) = players.get_mut(winner) else {
-                        error!("Failed to find winner! {winner}");
+                        error!("Game {game:?}: Failed to find winner! {winner}");
                         continue;
                     };
                     **score += 1;
                     info!(
-                        "Player {winner} (side {winning_side:?} gains score! Total: {}",
+                        "Game {game:?}: Player {winner:?} (side {winning_side:?} gains score! Total: {}",
                         **score
                     );
                 }
@@ -121,6 +126,42 @@ impl WordFightGamePlugin {
                 .flatten()
             {
                 word.clear();
+            }
+        }
+    }
+
+    fn despawn_empty_games(
+        mut commands: Commands,
+        games: Query<Entity, With<Game>>,
+        players: Query<&InGame, With<Client>>,
+    ) {
+        for game in games.iter() {
+            match players.iter().filter(|in_game| in_game.0 == game).count() {
+                0 => {
+                    info!("Despawning game {game:?} with no players left");
+                    commands.entity(game).despawn();
+                }
+                1 => {
+                    info!("Despawning game {game:?} with one players left");
+                    commands.entity(game).despawn();
+                }
+                _ => {}
+            }
+        }
+    }
+
+    fn cleanup_game_entities(
+        mut commands: Commands,
+        mut removed_games: RemovedComponents<Game>,
+        game_entities: Query<(Entity, &InGame)>,
+    ) {
+        for game in removed_games.read() {
+            for (entity, _) in game_entities
+                .iter()
+                .filter(|(_, in_game)| in_game.0 == game)
+            {
+                info!("Game {game:?}: Cleaning up entity {entity:?}");
+                commands.entity(entity).despawn();
             }
         }
     }
@@ -184,31 +225,26 @@ impl SpawnGame {
     }
 
     fn observer(trigger: Trigger<Self>, mut commands: Commands) {
-        let player_one = commands
-            .entity(trigger.event().client1)
-            .insert(PlayerBundle {
-                side: PlayerSide::Left,
-                word: Word::default(),
-                score: Score::default(),
-            })
-            .id();
-        let player_two = commands
-            .entity(trigger.event().client2)
-            .insert(PlayerBundle {
-                side: PlayerSide::Right,
-                word: Word::default(),
-                score: Score::default(),
-            })
-            .id();
+        let player_one = trigger.event().client1;
+        let player_two = trigger.event().client2;
         let game = commands
-            .spawn(GameBundle::new(
-                player_one,
-                player_two,
-                trigger.event().arena_size,
+            .spawn((
+                GameBundle::new(player_one, player_two, trigger.event().arena_size),
+                Replicated,
             ))
             .id();
-        commands.entity(player_one).insert(InGame(game));
-        commands.entity(player_two).insert(InGame(game));
+        commands.entity(player_one).insert(PlayerBundle {
+            side: PlayerSide::Left,
+            word: Word::default(),
+            score: Score::default(),
+            in_game: InGame(game),
+        });
+        commands.entity(player_two).insert(PlayerBundle {
+            side: PlayerSide::Right,
+            word: Word::default(),
+            score: Score::default(),
+            in_game: InGame(game),
+        });
         info!("Spawned game {game} with players {player_one}, {player_two}");
     }
 }

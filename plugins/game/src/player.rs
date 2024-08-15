@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use bevy::prelude::*;
 use bevy_replicon::prelude::*;
 
-use crate::Letter;
+use crate::{InGame, Letter};
 
 #[derive(Debug)]
 #[derive(Component, Deref, Reflect)]
@@ -73,4 +73,5 @@ pub struct PlayerBundle {
     pub side: PlayerSide,
     pub score: Score,
     pub word: Word,
+    pub in_game: InGame,
 }

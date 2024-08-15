@@ -36,6 +36,7 @@ pub enum WorkerMessage {
 #[derive(Debug)]
 #[derive(Deserialize, Serialize)]
 pub struct UpdateStateMessage {
+    pub my_side: PlayerSide,
     pub left_word: String,
     pub left_score: usize,
     pub right_word: String,

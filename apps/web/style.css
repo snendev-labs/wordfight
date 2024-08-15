@@ -34,7 +34,6 @@ main {
     flex-direction: row;
     justify-content: space-evenly;
     border: 1px solid #414141;
-    background: #eaeaeb;
 }
 
 .arena {
@@ -49,15 +48,23 @@ main {
     display: flex;
     flex-direction: column;
     justify-content: space-evenly;
-    gap: 20px;
+    gap: 12px;
 }
 
 .letter-slot {
-    width: 90px;
-    height: 90px;
+    width: 72px;
+    height: 72px;
     border: 2px solid #313131;
     border-top: none;
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.friendly {
+    background: #3d88b8;
+}
+
+.enemy {
+    background: #ad393f;
 }

@@ -42,6 +42,8 @@ Players cannot type non-word inputs, but this doesn't mean the player has to fin
 
 So the game will generally be played around figuring out what words your opponent has in mind to play and trying to evade or counter them.
 
+Download the [wordlist](plugins/game/src/wordlist.txt) if you want assistance finding good tools for combat.
+
 ## Design
 
 This is an attempt at creating an abstract/minimalist game that echoes the game design of [traditional 2D fighting games](https://en.wikipedia.org/wiki/Fighting_game#Game_design). In a similar way to those games, players are rewarded for doing research to find various ways of pressuring and attacking opponents, as well as creating spacing and timing traps that can punish enemy players for performing a predicted behavior. Feel free to scour the word list for combos to get the upper hand -- and let us know your favorites!

@@ -18,6 +18,7 @@ jobs:
   deploy:
     name: Deno Deploy
     runs-on: ubuntu-latest
+    environment: production
 
     permissions:
       id-token: write # Needed for auth with Deno Deploy
@@ -47,7 +48,11 @@ jobs:
         run: "mkdir assets"
 
       - name: Build wasm
-        run: "SERVER_IP=$SERVER_IP SERVER_PORT=$SERVER_PORT SERVER_TOKENS_PORT=$SERVER_TOKENS_PORT trunk build --release"
+        run: "trunk build --release"
+        env:
+            SERVER_IP: $SERVER_IP
+            SERVER_PORT: $SERVER_PORT
+            SERVER_TOKENS_PORT: $SERVER_TOKENS_PORT
 
       - name: Upload to Deno Deploy
         uses: denoland/deployctl@v1

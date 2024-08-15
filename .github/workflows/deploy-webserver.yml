@@ -9,7 +9,10 @@ on:
         description: 'Version number in the format `v1.2.3`'
         required: true
         type: string
-
+env:
+  SERVER_IP: ${{ vars.SERVER_IP }}
+  SERVER_PORT: ${{ vars.SERVER_PORT }}
+  SERVER_TOKENS_PORT: ${{ vars.SERVER_TOKENS_PORT }}
 
 jobs:
   deploy:

@@ -9,7 +9,7 @@ pub const WORD_LIST: &str = include_str!("wordlist.txt");
 #[derive(Resource, Reflect)]
 pub struct WordList(Vec<String>);
 
-impl<'a> Default for WordList {
+impl Default for WordList {
     fn default() -> Self {
         Self(
             WORD_LIST

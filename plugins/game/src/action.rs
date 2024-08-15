@@ -19,7 +19,7 @@ impl Action {
     pub fn apply(&self, word: &mut Word, dictionary: &Dictionary) {
         match self {
             Append(letter) => {
-                let test_string = format!("{}{}", word.to_string(), letter.to_string());
+                let test_string = format!("{}{}", word, letter);
                 if dictionary.is_word_substring(test_string.as_str()) {
                     word.push(*letter);
                     info!("Added {letter}, making {word}");

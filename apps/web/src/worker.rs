@@ -189,9 +189,9 @@ async fn fetch_server_token() -> Result<String, JsValue> {
     let server_origin = SERVER_IP.unwrap_or(SERVER_DEFAULT_IP);
     let server_token_port = SERVER_TOKENS_PORT.unwrap_or(SERVER_DEFAULT_TOKENS_PORT);
     let server_url = format!("http://{server_origin}:{server_token_port}");
-    let mut opts = RequestInit::new();
-    opts.method("GET");
-    opts.mode(RequestMode::Cors);
+    let opts = RequestInit::new();
+    opts.set_method("GET");
+    opts.set_mode(RequestMode::Cors);
     let request = Request::new_with_str_and_init(&server_url, &opts)?;
 
     let response = JsFuture::from(fetch(&request)).await?;

@@ -44,7 +44,9 @@ impl Plugin for ClientTransportPlugin {
         use base64::Engine;
         use renet2::transport::ClientAuthentication;
         #[cfg(target_family = "wasm")]
-        use renet2::transport::{ServerCertHash, WebTransportClient, WebTransportClientConfig};
+        use renet2::transport::{
+            NetcodeClientTransport, ServerCertHash, WebTransportClient, WebTransportClientConfig,
+        };
         use wasm_timer::SystemTime;
 
         let server_addr: SocketAddr = self.server_address.clone().into();
@@ -76,7 +78,7 @@ impl Plugin for ClientTransportPlugin {
             Vec::from([ServerCertHash::try_from(hash).unwrap()]),
         );
         #[cfg(target_family = "wasm")]
-        let socket = renet2::transport::WebTransportClient::new(config);
+        let socket = WebTransportClient::new(config);
         #[cfg(target_family = "wasm")]
         let transport = NetcodeClientTransport::new(current_time, authentication, socket).unwrap();
         #[cfg(target_family = "wasm")]

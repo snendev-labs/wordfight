@@ -24,10 +24,7 @@ impl Action {
                     word.push(*letter);
                     info!("Added {letter}, making {word}");
                 } else {
-                    info!(
-                        "{word}{} is not in the dictionary",
-                        letter.to_string().to_lowercase()
-                    );
+                    info!("{word}{letter} is not in the dictionary",);
                 }
             }
             Delete => {

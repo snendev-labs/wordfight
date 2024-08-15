@@ -18,7 +18,7 @@ impl ClientTransportPlugin {
             .unwrap()
     }
 
-    fn url(host: &str, port: &str, server_token: &str) -> Option<Self> {
+    fn _url(host: &str, port: &str, server_token: &str) -> Option<Self> {
         format!("{host}:{port}")
             .parse::<Url>()
             .map(|url| Self {

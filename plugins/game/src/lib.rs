@@ -61,6 +61,7 @@ impl WordFightGamePlugin {
             event: action,
         } in action_events.read()
         {
+            info!("Client {client_id:?} took action: {action:?}");
             let ActionEvent {
                 action,
                 side,
@@ -71,6 +72,7 @@ impl WordFightGamePlugin {
             };
 
             if **client == *client_id && *player_side == *side {
+                info!("Action {action:?} applied to {}", word.clone());
                 action.apply(&mut word, &dictionary);
             }
         }
@@ -84,11 +86,13 @@ impl WordFightGamePlugin {
             let Ok([(left_word, _), (right_word, _)]) =
                 players.get_many([game_players.left, game_players.right])
             else {
+                error!("Failed to find players {game_players:?}");
                 continue;
             };
             let Ok(strike) = arena.strike(left_word, right_word) else {
                 continue;
             };
+            info!("Strike occurred: {strike:?}");
             // contact has occurred!
             // first determine whether anyone gets a point
             match strike {
@@ -98,9 +102,14 @@ impl WordFightGamePlugin {
                         PlayerSide::Right => game_players.right,
                     };
                     let Ok((_, mut score)) = players.get_mut(winner) else {
+                        error!("Failed to find winner! {winner}");
                         continue;
                     };
                     **score += 1;
+                    info!(
+                        "Player {winner} (side {winning_side:?} gains score! Total: {}",
+                        **score
+                    );
                 }
                 // both parry conditions result in no score change
                 Strike::OverRange | Strike::Parry => {}
@@ -200,6 +209,7 @@ impl SpawnGame {
             .id();
         commands.entity(player_one).insert(InGame(game));
         commands.entity(player_two).insert(InGame(game));
+        info!("Spawned game {game} with players {player_one}, {player_two}");
     }
 }
 

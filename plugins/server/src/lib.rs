@@ -1,12 +1,15 @@
-use bevy::prelude::{
-    App, Commands, Entity, EventReader, IntoSystemConfigs, Name, Plugin, Query, Res, ResMut,
-    Startup, Update, With, Without,
+use bevy::{
+    log::info,
+    prelude::{
+        App, Commands, Entity, EventReader, IntoSystemConfigs, Name, Plugin, Query, Res, ResMut,
+        Startup, Update, With, Without,
+    },
 };
 
 use bevy_replicon::prelude::{ConnectedClients, Replicated, RepliconChannels, ServerEvent};
 use bevy_replicon_renet2::{
     renet2::{ConnectionConfig, RenetServer},
-    RenetChannelsExt,
+    RenetChannelsExt, RepliconRenetServerPlugin,
 };
 
 use game::{Client, InGame, SpawnGame};
@@ -21,6 +24,8 @@ pub struct ServerPlugin {
 
 impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(RepliconRenetServerPlugin);
+
         app.add_plugins(ServerTransportPlugin {
             port: self.port.clone(),
             wt_tokens_port: self.wt_tokens_port.clone(),
@@ -42,6 +47,11 @@ impl ServerPlugin {
         let server_channels_config = replicon_channels.get_server_configs();
         let client_channels_config = replicon_channels.get_client_configs();
 
+        info!(
+            "Starting server! Server channels: {} | Client channels: {}",
+            server_channels_config.len(),
+            client_channels_config.len()
+        );
         let server = RenetServer::new(ConnectionConfig {
             server_channels_config,
             client_channels_config,
@@ -54,9 +64,10 @@ impl ServerPlugin {
         for [client1, client2] in clients
             .iter()
             .collect::<Vec<_>>()
-            .chunks(2)
+            .chunks_exact(2)
             .map(|chunk| [chunk[0], chunk[1]])
         {
+            info!("Found match: {client1} + {client2}");
             commands.trigger(SpawnGame::new(7, client1, client2));
         }
     }
@@ -69,8 +80,7 @@ impl ServerPlugin {
         for event in server_events.read() {
             match event {
                 ServerEvent::ClientConnected { client_id } => {
-                    #[cfg(feature = "log")]
-                    bevy_log::info!("Player {} connected.", client_id.get());
+                    info!("Player {} connected.", client_id.get());
                     // Spawn new player entity
                     commands.spawn((
                         Replicated,
@@ -82,8 +92,7 @@ impl ServerPlugin {
                     if let Some((player_entity, _)) =
                         clients.iter().find(|(_, id)| ***id == *client_id)
                     {
-                        #[cfg(feature = "log")]
-                        bevy_log::debug!("Player disconnected: {}", reason);
+                        info!("Player disconnected: {}", reason);
                         commands.entity(player_entity).despawn();
                     }
                 }

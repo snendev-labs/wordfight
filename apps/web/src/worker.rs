@@ -55,8 +55,6 @@ impl Worker for BevyWorker {
     }
 
     fn update(&mut self, scope: &WorkerScope<Self>, message: Self::Message) {
-        #[cfg(feature = "log")]
-        log("Update".to_string());
         if let Some(app) = self.game.as_mut() {
             let WorkerUpdateMessage::Update = message else {
                 return;
@@ -85,9 +83,9 @@ impl Worker for BevyWorker {
     }
 
     fn received(&mut self, _: &WorkerScope<Self>, message: Self::Input, id: HandlerId) {
-        #[cfg(feature = "log")]
-        log(format!("Message received! {:?}", message));
         if let Some(app) = self.game.as_mut() {
+            #[cfg(feature = "log")]
+            log(format!("Message received! {:?}", message));
             self.subscriptions.insert(id);
             let action: wordfight::Action = match message {
                 AppMessage::AddLetter(letter) => wordfight::Action::Append(letter),
@@ -104,6 +102,12 @@ impl Worker for BevyWorker {
                 .send_event(action.made_by(my_player, wordfight::PlayerSide::Left));
 
             app.update();
+        } else {
+            #[cfg(feature = "log")]
+            log(format!(
+                "Discarding message received before app is ready: {:?}",
+                message
+            ));
         }
     }
 }

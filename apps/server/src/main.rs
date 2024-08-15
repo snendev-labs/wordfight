@@ -5,7 +5,7 @@ use bevy::{
 };
 
 use server::ServerPlugin;
-use wordfight::WordFightPlugins;
+use wordfight::{ActiveGamePlugin, WordFightPlugins};
 
 fn main() {
     App::default()
@@ -14,11 +14,14 @@ fn main() {
                 // need some wait duration so that async tasks are not entirely outcompeted by the main loop
                 std::time::Duration::from_millis(10),
             ),
-            WordFightPlugins.build().set(LogPlugin {
-                filter: "wgpu=error,naga=warn,h3=error".to_string(),
-                level: Level::INFO,
-                ..Default::default()
-            }),
+            WordFightPlugins
+                .build()
+                .set(LogPlugin {
+                    filter: "wgpu=error,naga=warn,h3=error".to_string(),
+                    level: Level::INFO,
+                    ..Default::default()
+                })
+                .disable::<ActiveGamePlugin>(),
         ))
         .add_plugins(ServerPlugin {
             port: option_env!("SERVER_PORT").unwrap_or("7636").to_string(),

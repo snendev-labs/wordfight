@@ -22,10 +22,17 @@ impl Action {
                 let test_string = format!("{}{}", word.to_string(), letter.to_string());
                 if dictionary.is_word_substring(test_string.as_str()) {
                     word.push(*letter);
+                    info!("Added {letter}, making {word}");
+                } else {
+                    info!(
+                        "{word}{} is not in the dictionary",
+                        letter.to_string().to_lowercase()
+                    );
                 }
             }
             Delete => {
-                word.pop();
+                let removed_letter = word.pop();
+                info!("Removed {removed_letter:?} from {word}");
             }
         }
     }

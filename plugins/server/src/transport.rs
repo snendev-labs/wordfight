@@ -28,7 +28,7 @@ struct NativeServerTransportPlugin {
 }
 
 impl NativeServerTransportPlugin {
-    fn url(host: &str, port: &str, tokens_port: &str) -> Self {
+    fn _url(host: &str, port: &str, tokens_port: &str) -> Self {
         Self {
             server_address: WebServerDestination::Url(format!("{host}:{port}").parse().unwrap()),
             tokens_address: WebServerDestination::Url(

@@ -1,12 +1,14 @@
 use bevy::{
     ecs::world::Command,
-    prelude::{App, Commands, Plugin, Startup, World},
+    log::info,
+    prelude::{App, Commands, IntoSystem, Plugin, Startup, Update, World},
 };
 
+use bevy_replicon::core::common_conditions as network_conditions;
 use bevy_replicon::prelude::RepliconChannels;
 use bevy_replicon_renet2::{
     renet2::{ConnectionConfig, RenetClient},
-    RenetChannelsExt,
+    RenetChannelsExt, RepliconRenetClientPlugin,
 };
 
 mod transport;
@@ -19,6 +21,8 @@ pub struct ClientPlugin {
 
 impl Plugin for ClientPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(RepliconRenetClientPlugin);
+
         #[cfg(target_family = "wasm")]
         app.add_plugins(transport::ClientTransportPlugin::new(
             &self.server_origin,
@@ -28,6 +32,14 @@ impl Plugin for ClientPlugin {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.add(ClientCommand::Connect);
         });
+        app.add_systems(
+            Update,
+            network_conditions::client_just_connected.map(|just_connected| {
+                if just_connected {
+                    info!("Connected!");
+                }
+            }),
+        );
     }
 }
 

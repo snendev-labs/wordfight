@@ -84,6 +84,7 @@ impl Arena {
     }
 }
 
+#[derive(Debug)]
 pub enum Strike {
     Score(PlayerSide),
     Parry,

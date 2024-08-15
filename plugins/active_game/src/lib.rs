@@ -19,8 +19,9 @@ impl Plugin for ActiveGamePlugin {
 }
 
 impl ActiveGamePlugin {
-    fn set_active_game(mut commands: Commands, spawned_games: Query<Entity, Added<Game>>) {
-        for game in spawned_games.iter() {
+    fn set_active_game(mut commands: Commands, spawned_games: Query<Entity, With<Game>>) {
+        if let Some(game) = spawned_games.iter().next() {
+            info!("Setting active game: {game}");
             commands.insert_resource(ActiveGame(game));
         }
     }
@@ -32,6 +33,7 @@ impl ActiveGamePlugin {
         games: Query<(&GamePlayers, &Arena)>,
         words: Query<(&Word, &Score)>,
         updated_words: Query<(), Changed<Word>>,
+        updated_scores: Query<(), Changed<Score>>,
     ) {
         let Some((game, players, arena)) = games
             .get(active_game.0)
@@ -41,6 +43,8 @@ impl ActiveGamePlugin {
                 game.is_changed()
                     || updated_words.contains(players.left)
                     || updated_words.contains(players.right)
+                    || updated_scores.contains(players.left)
+                    || updated_scores.contains(players.right)
             })
         else {
             return;
@@ -64,6 +68,7 @@ impl ActiveGamePlugin {
             right_word,
             right_score,
         };
+        info!("Game update triggered: {event:?}");
         commands.trigger(event.clone());
         events.send(event);
     }

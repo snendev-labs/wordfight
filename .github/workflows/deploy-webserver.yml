@@ -40,9 +40,6 @@ jobs:
       - name: Add wasm target
         run: "rustup target add wasm32-unknown-unknown"
 
-      - name: Create dist directory
-        run: "mkdir dist"
-
       - name: Build wasm
         run: "trunk build --release"
 

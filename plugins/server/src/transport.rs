@@ -94,7 +94,9 @@ impl Plugin for NativeServerTransportPlugin {
             runtime.spawn(async move {
                 let cors = warp::cors()
                     .allow_method("GET")
+                    .allow_origin("http://localhost:8000")
                     .allow_origin("http://localhost:8080")
+                    .allow_origin("http://127.0.0.1:8000")
                     .allow_origin("http://127.0.0.1:8080");
                 let serve_certs = warp::path::end()
                     .map(move || cert_hash_b64.clone())

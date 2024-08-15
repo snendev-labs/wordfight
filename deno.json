@@ -1,0 +1,9 @@
+{
+  "imports": {
+    "jsr:@std/http": "jsr:@std/http"
+  },
+  "tasks": {
+    "build": "trunk build --release",
+    "serve": "deno run -A webserver.ts"
+  }
+}

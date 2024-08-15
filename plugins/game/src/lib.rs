@@ -72,7 +72,7 @@ impl WordFightGamePlugin {
             };
 
             if **client == *client_id && *player_side == *side {
-                info!("Action {action:?} applied to {}", word.clone());
+                info!("Action {action:?} applied to \"{}\"", word.clone());
                 action.apply(&mut word, &dictionary);
             }
         }

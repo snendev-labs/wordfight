@@ -4,6 +4,7 @@
   },
   "tasks": {
     "build": "trunk build --release",
-    "serve": "deno run -A webserver.ts"
+    "serve": "deno run -A webserver.ts",
+    "clippy": "cargo clippy --workspace --all-targets --all-features -- --deny warnings"
   }
 }

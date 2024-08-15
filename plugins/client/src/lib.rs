@@ -27,7 +27,6 @@ impl Plugin for ClientPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(RepliconRenetClientPlugin);
 
-        #[cfg(target_family = "wasm")]
         app.add_plugins(transport::ClientTransportPlugin::new(
             &self.server_origin,
             &self.server_port,

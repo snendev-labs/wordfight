@@ -1,9 +1,15 @@
-name: Deploy
+name: Deploy Webserver (Deno Deploy)
 on:
   push:
-    branches: main
-  pull_request:
-    branches: main
+    tags:
+        - "v[0-9]+.[0-9]+.[0-9]+*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number in the format `v1.2.3`'
+        required: true
+        type: string
+
 
 jobs:
   deploy:
@@ -33,6 +39,9 @@ jobs:
 
       - name: Create dist directory
         run: "mkdir dist"
+
+      - name: Populate target directory from cache
+        uses: Leafwing-Studios/cargo-cache@v2
 
       - name: Build wasm
         run: "trunk build --release"

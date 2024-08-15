@@ -73,7 +73,7 @@ impl Worker for BevyWorker {
             };
             let events = app.world().resource::<Events<ActiveGameUpdate>>();
             let mut reader = events.get_reader();
-            if let Some(update) = reader.read(&events).last() {
+            if let Some(update) = reader.read(events).last() {
                 for id in &self.subscriptions {
                     scope.respond(
                         *id,
@@ -94,7 +94,7 @@ impl Worker for BevyWorker {
         }
     }
 
-    fn received(&mut self, _: &WorkerScope<Self>, message: Self::Input, id: HandlerId) {
+    fn received(&mut self, _: &WorkerScope<Self>, message: Self::Input, _: HandlerId) {
         let Some(app) = self.game.as_mut() else {
             #[cfg(feature = "log")]
             log(format!(
@@ -173,12 +173,9 @@ fn get_my_player(world: &mut World) -> Option<(Entity, PlayerSide)> {
         return None;
     };
     let mut query = world.query::<(Entity, &PlayerSide, &Client)>();
-    let Some((my_player, my_side, _)) = query
+    let (my_player, my_side, _) = query
         .iter(world)
-        .find(|(_, _, client)| ***client == my_client_id)
-    else {
-        return None;
-    };
+        .find(|(_, _, client)| ***client == my_client_id)?;
     Some((my_player, *my_side))
 }
 

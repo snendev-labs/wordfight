@@ -44,7 +44,7 @@ fn App() -> impl IntoView {
             match message {
                 wordfight_web::WorkerMessage::UpdateState(state) => {
                     #[cfg(feature = "log")]
-                    log(format!("Setting state..."));
+                    log("Setting state...".to_string());
                     if !game_started.get() {
                         set_game_started.set(true);
                     }
@@ -180,7 +180,7 @@ fn Word(
         top_word
             .get()
             .chars()
-            .map(|char| Some(char))
+            .map(Some)
             // then include the number of empty spaces
             .chain((0..empty_spaces_count()).map(|_| None))
             // then include the bottom word, reversed, after skipping any overwritten letters
@@ -189,7 +189,7 @@ fn Word(
                     .chars()
                     .rev()
                     .skip(overwritten_spaces_count())
-                    .map(|char| Some(char)),
+                    .map(Some),
             )
             .enumerate()
             .collect::<Vec<_>>();

@@ -57,13 +57,11 @@ strip = "none"
 [features]
 default = []
 dev = ["dep:bevy-inspector-egui"]
-ui = ["dep:ui"]
 
 [dependencies]
 # plugins
 active_game = { workspace = true }
 game = { workspace = true }
-ui = { workspace = true, optional = true }
 
 # bevy
 bevy = { workspace = true }

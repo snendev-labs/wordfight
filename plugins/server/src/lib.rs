@@ -1,12 +1,12 @@
 use bevy::{
     log::info,
     prelude::{
-        App, Commands, Entity, EventReader, IntoSystemConfigs, Name, Plugin, Query, Res, ResMut,
-        Startup, Update, With, Without,
+        App, Commands, Entity, EventReader, IntoSystemConfigs, Plugin, Query, Res, ResMut, Startup,
+        Update, With, Without,
     },
 };
 
-use bevy_replicon::prelude::{ConnectedClients, Replicated, RepliconChannels, ServerEvent};
+use bevy_replicon::prelude::{ConnectedClients, RepliconChannels, ServerEvent};
 use bevy_replicon_renet2::{
     renet2::{ConnectionConfig, RenetServer},
     RenetChannelsExt, RepliconRenetServerPlugin,
@@ -82,11 +82,7 @@ impl ServerPlugin {
                 ServerEvent::ClientConnected { client_id } => {
                     info!("Player {} connected.", client_id.get());
                     // Spawn new player entity
-                    commands.spawn((
-                        Replicated,
-                        Name::new(format!("Player {}", client_id.get())),
-                        Client::from(*client_id),
-                    ));
+                    commands.spawn(Client::from(*client_id).bundle());
                 }
                 ServerEvent::ClientDisconnected { client_id, reason } => {
                     if let Some((player_entity, _)) =
@@ -136,13 +132,7 @@ impl ServerPlugin {
             let visible = match (in_game1, in_game2) {
                 (None, None) => true,
                 (None, Some(_)) | (Some(_), None) => false,
-                (Some(game1), Some(game2)) => {
-                    if **game1 == **game2 {
-                        true
-                    } else {
-                        false
-                    }
-                }
+                (Some(game1), Some(game2)) => **game1 == **game2,
             };
             let client1 = connected_clients.client_mut(**player1);
             let visibility1 = client1.visibility_mut();

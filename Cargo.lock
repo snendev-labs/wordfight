@@ -6630,7 +6630,6 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui",
  "game",
- "ui",
 ]
 
 [[package]]

@@ -39,10 +39,12 @@ impl ClientTransportPlugin {
     }
 }
 
-#[cfg(target_family = "wasm")]
 impl Plugin for ClientTransportPlugin {
     fn build(&self, app: &mut App) {
-        use renet2::transport::{ClientAuthentication, NetcodeClientTransport};
+        use base64::Engine;
+        use renet2::transport::ClientAuthentication;
+        #[cfg(target_family = "wasm")]
+        use renet2::transport::{ServerCertHash, WebTransportClient, WebTransportClientConfig};
         use wasm_timer::SystemTime;
 
         let server_addr: SocketAddr = self.server_address.clone().into();
@@ -58,21 +60,26 @@ impl Plugin for ClientTransportPlugin {
             user_data: None,
         };
 
-        // TODO: to support this at this layer we would need to pass the client socket in from above
-        // #[cfg(feature = "memory_transport")]
-        // let socket = renet2::transport::MemorySocketClient::new(client_id as u16, client_memory_socket).unwrap();
-        use base64::Engine;
-        use renet2::transport::{ServerCertHash, WebTransportClientConfig};
-
         let hash = base64::engine::general_purpose::STANDARD
             .decode(self.server_token.clone())
             .unwrap();
+        #[cfg(not(target_family = "wasm"))]
+        let _ = hash;
+        #[cfg(not(target_family = "wasm"))]
+        let _ = authentication;
+        #[cfg(not(target_family = "wasm"))]
+        let _ = app;
+
+        #[cfg(target_family = "wasm")]
         let config = WebTransportClientConfig::new_with_certs(
             server_addr,
             Vec::from([ServerCertHash::try_from(hash).unwrap()]),
         );
+        #[cfg(target_family = "wasm")]
         let socket = renet2::transport::WebTransportClient::new(config);
+        #[cfg(target_family = "wasm")]
         let transport = NetcodeClientTransport::new(current_time, authentication, socket).unwrap();
+        #[cfg(target_family = "wasm")]
         app.insert_resource(transport);
     }
 }

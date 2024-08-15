@@ -9,6 +9,17 @@ use crate::{InGame, Letter};
 #[derive(Component, Deref, Reflect)]
 #[derive(Deserialize, Serialize)]
 pub struct Client(ClientId);
+pub use bevy_replicon::prelude::ClientId;
+
+impl Client {
+    pub fn bundle(self) -> impl Bundle {
+        (
+            Replicated,
+            Name::new(format!("Player {}", self.0.get())),
+            self,
+        )
+    }
+}
 
 impl From<ClientId> for Client {
     fn from(id: ClientId) -> Self {

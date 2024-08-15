@@ -317,8 +317,14 @@ mod tests {
         let mut app = app();
 
         let size = 7;
-        let client1 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
-        let client2 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
+        let client1 = app
+            .world_mut()
+            .spawn(Client::from(ClientId::SERVER).bundle())
+            .id();
+        let client2 = app
+            .world_mut()
+            .spawn(Client::from(ClientId::SERVER).bundle())
+            .id();
         app.world_mut()
             .trigger(SpawnGame::new(size, client1, client2));
         // update to let spawns / etc flush
@@ -326,7 +332,7 @@ mod tests {
 
         let (player_one, player_two) = find_players(app.world_mut());
 
-        let first_three_letters: Vec<Letter> = ALPHABET[0..3].iter().cloned().collect();
+        let first_three_letters: Vec<Letter> = ALPHABET[0..3].to_vec();
         set_word(app.world_mut(), player_one, first_three_letters.clone());
         set_word(app.world_mut(), player_two, first_three_letters);
 
@@ -356,8 +362,14 @@ mod tests {
         let mut app = app();
         let size = 7;
 
-        let client1 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
-        let client2 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
+        let client1 = app
+            .world_mut()
+            .spawn(Client::from(ClientId::SERVER).bundle())
+            .id();
+        let client2 = app
+            .world_mut()
+            .spawn(Client::from(ClientId::SERVER).bundle())
+            .id();
         app.world_mut()
             .trigger(SpawnGame::new(size, client1, client2));
         // update to let spawns / etc flush
@@ -365,7 +377,7 @@ mod tests {
 
         let (player_one, player_two) = find_players(app.world_mut());
 
-        let first_six_letters = ALPHABET[0..6].iter().cloned().collect();
+        let first_six_letters = ALPHABET[0..6].to_vec();
         set_word(app.world_mut(), player_one, first_six_letters);
 
         // nothing should happen here, but update to prevent influencing tests of future mutations
@@ -391,8 +403,14 @@ mod tests {
         let mut app = app();
         let size = 7;
 
-        let client1 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
-        let client2 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
+        let client1 = app
+            .world_mut()
+            .spawn(Client::from(ClientId::SERVER).bundle())
+            .id();
+        let client2 = app
+            .world_mut()
+            .spawn(Client::from(ClientId::SERVER).bundle())
+            .id();
         app.world_mut()
             .trigger(SpawnGame::new(size, client1, client2));
         // update to let spawns / etc flush
@@ -444,8 +462,14 @@ mod tests {
         let mut app = app();
         let size = 7;
 
-        let client1 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
-        let client2 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
+        let client1 = app
+            .world_mut()
+            .spawn(Client::from(ClientId::SERVER).bundle())
+            .id();
+        let client2 = app
+            .world_mut()
+            .spawn(Client::from(ClientId::SERVER).bundle())
+            .id();
         app.world_mut()
             .trigger(SpawnGame::new(size, client1, client2));
         // update to let spawns / etc flush
@@ -453,7 +477,7 @@ mod tests {
 
         let (player_one, player_two) = find_players(app.world_mut());
 
-        let first_three_letters: Vec<Letter> = SASS[0..3].iter().cloned().collect();
+        let first_three_letters: Vec<Letter> = SASS[0..3].to_vec();
         set_word(app.world_mut(), player_one, first_three_letters.clone());
         set_word(app.world_mut(), player_two, first_three_letters);
 
@@ -476,7 +500,7 @@ mod tests {
 
         // now try the same for the other player
 
-        let first_three_letters: Vec<Letter> = SASS[0..3].iter().cloned().collect();
+        let first_three_letters: Vec<Letter> = SASS[0..3].to_vec();
         set_word(app.world_mut(), player_one, first_three_letters.clone());
         set_word(app.world_mut(), player_two, first_three_letters);
         app.update();
@@ -500,8 +524,14 @@ mod tests {
         let mut app = app();
         let size = 7;
 
-        let client1 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
-        let client2 = app.world_mut().spawn(Client::from(ClientId::SERVER)).id();
+        let client1 = app
+            .world_mut()
+            .spawn(Client::from(ClientId::SERVER).bundle())
+            .id();
+        let client2 = app
+            .world_mut()
+            .spawn(Client::from(ClientId::SERVER).bundle())
+            .id();
         app.world_mut()
             .trigger(SpawnGame::new(size, client1, client2));
         // update to let spawns / etc flush
@@ -509,7 +539,7 @@ mod tests {
 
         let (player_one, player_two) = find_players(app.world_mut());
 
-        let first_three_letters: Vec<Letter> = ALPHABET[0..3].iter().cloned().collect();
+        let first_three_letters: Vec<Letter> = ALPHABET[0..3].to_vec();
         set_word(app.world_mut(), player_one, first_three_letters.clone());
         set_word(app.world_mut(), player_two, first_three_letters);
 

@@ -28,10 +28,13 @@ jobs:
         with:
           node-version: lts/*
 
-      - name: Install step
+      - name: Install trunk
         run: "cargo install trunk"
 
-      - name: Build step
+      - name: Create dist directory
+        run: "mkdir dist"
+
+      - name: Build wasm
         run: "trunk build --release"
 
       - name: Upload to Deno Deploy

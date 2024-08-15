@@ -10,7 +10,14 @@ To run the webserver (be sure to have [`trunk`](https://trunkrs.dev/) installed!
 trunk serve --release
 ```
 
-To run the game-server:
+The production webserver is deployed using Deno Deploy. To run the webserver using [`deno`](https://deno.com/):
+
+```sh
+deno task build
+deno task serve
+```
+
+To run the game server:
 
 ```sh
 cargo run -p wordfight-server --release

@@ -8,11 +8,14 @@ license = "MIT OR Apache-2.0"
 game = { workspace = true }
 
 bevy = { workspace = true }
+bevy_prng = { workspace = true }
+bevy_rand = { workspace = true }
 bevy_replicon = { workspace = true, features = ["server"] }
 bevy_replicon_renet2 = { workspace = true, features = ["wt_server_transport"] }
 bevy_renet2 = { workspace = true }
 renet2 = { workspace = true, features = ["wt_server_transport"] }
 
+rand_core = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 bincode = "1.3"
 base64 = { version = "0.22" }

@@ -11,6 +11,8 @@ ui = { path = "plugins/ui" }
 bevy = { version = "0.14", default-features = false }
 bevy_mod_try_system = "0.2"
 bevy-inspector-egui = "0.25"
+bevy_prng = { version = "0.7", features = ["wyrand"] }
+bevy_rand = { version = "0.7", features = ["wyrand"] }
 bevy_renet2 = { git = "https://github.com/UkoeHB/renet2", rev = "0.0.5" }
 bevy_replicon = "0.27"
 bevy_replicon_renet2 = { git = "https://github.com/UkoeHB/renet2", rev = "0.0.5" }
@@ -20,7 +22,9 @@ renet2 = { git = "https://github.com/UkoeHB/renet2", rev = "0.0.5", default-feat
 ] }
 sickle_ui = "0.2"
 
+
 anyhow = "1.0"
+rand_core = { version = "0.6" }
 serde = "1.0"
 thiserror = "1.0"
 

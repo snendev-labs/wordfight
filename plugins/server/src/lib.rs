@@ -1,3 +1,5 @@
+use rand_core::RngCore;
+
 use bevy::{
     log::info,
     prelude::{
@@ -5,7 +7,8 @@ use bevy::{
         Update, With, Without,
     },
 };
-
+use bevy_prng::WyRand;
+use bevy_rand::prelude::{EntropyPlugin as RandEntropyPlugin, *};
 use bevy_replicon::prelude::{ConnectedClients, RepliconChannels, ServerEvent};
 use bevy_replicon_renet2::{
     renet2::{ConnectionConfig, RenetServer},
@@ -17,6 +20,9 @@ use game::{Client, InGame, SpawnGame};
 mod transport;
 use transport::*;
 
+pub type Entropy = EntropyComponent<WyRand>;
+pub type GlobalEntropy = bevy_rand::prelude::GlobalEntropy<WyRand>;
+
 pub struct ServerPlugin {
     pub port: String,
     pub wt_tokens_port: String,
@@ -24,7 +30,10 @@ pub struct ServerPlugin {
 
 impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(RepliconRenetServerPlugin);
+        app.add_plugins((
+            RepliconRenetServerPlugin,
+            RandEntropyPlugin::<WyRand>::default(),
+        ));
 
         app.add_plugins(ServerTransportPlugin {
             port: self.port.clone(),
@@ -60,7 +69,11 @@ impl ServerPlugin {
         commands.insert_resource(server);
     }
 
-    fn matchmake(mut commands: Commands, clients: Query<Entity, (With<Client>, Without<InGame>)>) {
+    fn matchmake(
+        mut commands: Commands,
+        clients: Query<Entity, (With<Client>, Without<InGame>)>,
+        mut entropy: ResMut<GlobalEntropy>,
+    ) {
         for [client1, client2] in clients
             .iter()
             .collect::<Vec<_>>()
@@ -68,7 +81,8 @@ impl ServerPlugin {
             .map(|chunk| [chunk[0], chunk[1]])
         {
             info!("Found match: {client1} + {client2}");
-            commands.trigger(SpawnGame::new(7, client1, client2));
+            let arena_size = 6 + (entropy.next_u64() / (u64::MAX / 3)) as usize;
+            commands.trigger(SpawnGame::new(arena_size, client1, client2));
         }
     }
 

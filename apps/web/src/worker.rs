@@ -199,6 +199,6 @@ async fn fetch_server_token() -> Result<String, JsValue> {
     assert!(response.is_instance_of::<Response>());
     let response: Response = response.dyn_into().unwrap();
     let text = JsFuture::from(response.text()?).await?;
-
+    log(text.as_string().unwrap());
     Ok(text.as_string().unwrap())
 }

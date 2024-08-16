@@ -8,6 +8,9 @@ pub use worker::*;
 pub const SERVER_IP: Option<&str> = option_env!("SERVER_IP");
 pub const SERVER_DEFAULT_IP: &str = "127.0.0.1";
 
+pub const SERVER_ORIGIN: Option<&str> = option_env!("SERVER_ORIGIN");
+pub const SERVER_DEFAULT_ORIGIN: &str = "http://localhost";
+
 pub const SERVER_PORT: Option<&str> = option_env!("SERVER_PORT");
 pub const SERVER_DEFAULT_PORT: &str = "7636";
 

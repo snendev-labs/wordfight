@@ -13,8 +13,9 @@ use client::{
 use wordfight::{ActiveGameUpdate, Client, PlayerSide, WordFightPlugins};
 
 use crate::{
-    AppMessage, UpdateStateMessage, WorkerMessage, SERVER_DEFAULT_IP, SERVER_DEFAULT_PORT,
-    SERVER_DEFAULT_TOKENS_PORT, SERVER_IP, SERVER_PORT, SERVER_TOKENS_PORT,
+    AppMessage, UpdateStateMessage, WorkerMessage, SERVER_DEFAULT_IP, SERVER_DEFAULT_ORIGIN,
+    SERVER_DEFAULT_PORT, SERVER_DEFAULT_TOKENS_PORT, SERVER_IP, SERVER_ORIGIN, SERVER_PORT,
+    SERVER_TOKENS_PORT,
 };
 
 // Use this to enable console logging
@@ -186,9 +187,9 @@ extern "C" {
 }
 
 async fn fetch_server_token() -> Result<String, JsValue> {
-    let server_origin = SERVER_IP.unwrap_or(SERVER_DEFAULT_IP);
+    let server_origin = SERVER_ORIGIN.unwrap_or(SERVER_DEFAULT_ORIGIN);
     let server_token_port = SERVER_TOKENS_PORT.unwrap_or(SERVER_DEFAULT_TOKENS_PORT);
-    let server_url = format!("http://{server_origin}:{server_token_port}");
+    let server_url = format!("{server_origin}:{server_token_port}");
     let opts = RequestInit::new();
     opts.set_method("GET");
     opts.set_mode(RequestMode::Cors);

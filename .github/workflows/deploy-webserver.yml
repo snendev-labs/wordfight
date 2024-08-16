@@ -47,6 +47,7 @@ jobs:
         run: "trunk build --release"
         env:
             SERVER_IP: ${{ vars.SERVER_IP }}
+            SERVER_ORIGIN: ${{ vars.SERVER_ORIGIN }}
             SERVER_PORT:  ${{ vars.SERVER_PORT }}
             SERVER_TOKENS_PORT:  ${{ vars.SERVER_TOKENS_PORT }}
 

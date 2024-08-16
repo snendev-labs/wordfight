@@ -10,6 +10,8 @@ impl PluginGroup for WordFightPlugins {
         let plugins = PluginGroupBuilder::start::<Self>();
         let plugins = plugins.add_group(DefaultPlugins);
         let plugins = plugins.add(WordFightGamePlugin).add(ActiveGamePlugin);
+        #[cfg(feature = "bots")]
+        let plugins = plugins.add(bot_controller::BotControllerPlugin);
         #[cfg(feature = "dev")]
         let plugins = plugins.add(StartupPlugin);
         #[cfg(feature = "dev")]

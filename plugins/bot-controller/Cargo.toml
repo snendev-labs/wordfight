@@ -1,0 +1,9 @@
+[package]
+name = "bot_controller"
+version = "0.1.0"
+edition = "2021"
+authors = ["Sean Sullivan <me@snen.dev>"]
+
+[dependencies]
+game = { workspace = true }
+bevy = { workspace = true, default-features = false }

@@ -2,7 +2,8 @@
 members = ["apps/*", "plugins/*"]
 
 [workspace.dependencies]
-active_game = { path = "plugins/active_game" }
+active_game = { path = "plugins/active-game" }
+bot_controller = { path = "plugins/bot-controller" }
 client = { path = "plugins/client" }
 game = { path = "plugins/game" }
 server = { path = "plugins/server" }
@@ -21,7 +22,6 @@ renet2 = { git = "https://github.com/UkoeHB/renet2", rev = "0.0.5", default-feat
     "serde",
 ] }
 sickle_ui = "0.2"
-
 
 anyhow = "1.0"
 rand_core = { version = "0.6" }
@@ -61,11 +61,13 @@ strip = "none"
 [features]
 default = []
 dev = ["dep:bevy-inspector-egui"]
+bots = ["dep:bot_controller"]
 
 [dependencies]
 # plugins
 active_game = { workspace = true }
 game = { workspace = true }
+bot_controller = { workspace = true, optional = true }
 
 # bevy
 bevy = { workspace = true }

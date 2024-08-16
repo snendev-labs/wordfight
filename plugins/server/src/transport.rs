@@ -96,7 +96,7 @@ impl Plugin for NativeServerTransportPlugin {
                     .allow_origin("http://localhost:8080")
                     .allow_origin("http://127.0.0.1:8000")
                     .allow_origin("http://127.0.0.1:8080")
-                    .allow_origin("http://wordfight.deno.dev");
+                    .allow_origin("https://wordfight.deno.dev");
                 let serve_certs = warp::path::end()
                     .map(move || cert_hash_b64.clone())
                     .with(cors);
